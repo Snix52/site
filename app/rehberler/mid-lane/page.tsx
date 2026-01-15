@@ -145,7 +145,7 @@ export default function MidLaneGuide() {
                 <div className="text-center space-y-6">
                     <Link href="/" className="inline-flex items-center gap-2 text-cyan-400 hover:text-white transition-colors group mb-4">
                         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                        <span className="text-xs font-bold uppercase tracking-widest">Ana Üsse Dön</span>
+                        <span className="text-xs font-bold uppercase tracking-widest">Kütüphaneye Dön</span>
                     </Link>
                     
                     <div className="flex justify-center">

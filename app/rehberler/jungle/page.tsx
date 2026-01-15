@@ -361,8 +361,8 @@ export default function JungleGuide() {
                 </div>
 
                 <div className="text-center text-gray-600 text-sm mt-12 pt-8 border-t border-white/5 uppercase tracking-[0.2em]">
-                    <p className="font-brand text-lg text-emerald-400 opacity-50 mb-2">SNIX JUNGLE</p>
-                    <p>Orman senin krallığın. Onu satranç gibi oyna, şans gibi değil.</p>
+                    <p className="font-brand text-lg text-emerald-400 opacity-50 mb-2">SNIX GG</p>
+                    <p>Orman tesadüflerin değil, mutlak matematiğin sahasıdır. Şansa güvenmeyi bırak; her kampı bir hamle, her baskını bir şah-mat gibi kurgula.</p>
                 </div>
             </div>
         </div>
