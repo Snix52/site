@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { 
   Brain, Timer, Shield, XCircle, CheckCircle, Info, 
   ChevronDown, ChevronUp, AlertOctagon, Target, UserMinus, ArrowLeft, SnixLogo,
-  Bush, Zap 
+   Zap 
 } from '@/components/Icons';
 import Link from 'next/link';
 
