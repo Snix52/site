@@ -19,15 +19,15 @@ export default function Home() {
         <div className="hidden md:flex items-center gap-10">
           <Link href="/" className="text-sm font-bold text-white hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Ana Sayfa</Link>
           
-          {/* GÜNCELLEME 1: Link '/rehberler' (Kütüphane) sayfasına yönlendirildi */}
+          {/* Link '/rehberler' (Kütüphane) sayfasına yönlendirildi */}
           <Link href="/rehberler" className="text-sm font-bold text-slate-400 hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Rehberler</Link>
           
           <Link href="#" className="text-sm font-bold text-slate-400 hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Videolar</Link>
         </div>
       </nav>
 
-      {/* 2. HERO SECTION */}
-      <main className="flex-1 flex flex-col justify-center items-center text-center px-4 relative z-10 -mt-20">
+      {/* 2. HERO SECTION - DÜZELTME BURADA YAPILDI (pt-32 eklendi, -mt-20 silindi) */}
+      <main className="flex-1 flex flex-col justify-center items-center text-center px-4 relative z-10 pt-32">
         
         {/* Merkezi Logo */}
         <div className="mb-8 relative group">
@@ -53,7 +53,7 @@ export default function Home() {
 
         {/* Butonlar */}
         <div className="flex flex-col sm:flex-row gap-5 items-center justify-center">
-          {/* GÜNCELLEME 2: Buton da '/rehberler' sayfasına yönlendirildi */}
+          {/* Buton da '/rehberler' sayfasına yönlendirildi */}
           <Link href="/rehberler" 
                 className="px-10 py-4 bg-[#00FFFF] hover:bg-white text-black font-black text-xs uppercase tracking-[0.25em] rounded-sm transition-all hover:scale-105 shadow-[0_0_20px_rgba(0,255,255,0.4)]">
             HEMEN BAŞLA (REHBER)
