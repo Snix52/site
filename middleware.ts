@@ -1,17 +1,18 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isProtectedRoute = createRouteMatcher(['/rehberler(.*)']);
+// Rehber rotalarını korumalı listeden çıkardık (boş bıraktık)
+const isProtectedRoute = createRouteMatcher([]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     const client = await auth();
-    // Eğer giriş yapmamışsa, login sayfasına at
+    // Eğer ilerde tekrar açarsan burası çalışacak
     if (!client.userId) {
        return client.redirectToSignIn();
     }
   }
-  // Giriş yapmışsa veya sayfa korumalı değilse devam et
+  // Giriş yapmasa bile herkes devam edebilecek
   return NextResponse.next();
 });
 
