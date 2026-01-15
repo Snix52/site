@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Rajdhani } from "next/font/google"; 
-// 1. Clerk kütüphanesini ekliyoruz
 import { ClerkProvider } from '@clerk/nextjs';
+// 1. Türkçe dil paketini import ettik
+import { trTR } from '@clerk/localizations';
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -22,8 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // 2. Tüm siteyi ClerkProvider ile sarmalıyoruz ki üyelik çalışsın
-    <ClerkProvider>
+    // 2. localization={trTR} ekleyerek sistemi Türkçe yaptık
+    <ClerkProvider localization={trTR}>
       <html lang="tr">
         <body className={`${inter.variable} ${rajdhani.variable} antialiased bg-[#050A14] text-slate-200`}>
           

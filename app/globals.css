@@ -60,3 +60,30 @@ h1, h2, h3, h4, .font-brand {
 ::-webkit-scrollbar-track { background: #0a1120; }
 ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
+
+/* ========================================= */
+/* 5. CLERK GİZLEME (YASAK TEKNİKLER) 🥷   */
+/* ========================================= */
+
+/* Development Mode Rozetini Gizle */
+.cl-development-badge {
+  display: none !important;
+}
+
+/* "Secured by Clerk" Yazısını ve Footer'ı Yok Et */
+.cl-internal-b3fm6y, /* Bu Clerk'in gizli kodudur */
+.cl-footer,          /* Genel footer sınıfı */
+a[href*="clerk.com"], /* Clerk linkleri */
+a[href*="clerk.dev"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Eğer yine gitmezse, en dipten vur */
+div[class*="cl-footer"] {
+  display: none !important;
+}
