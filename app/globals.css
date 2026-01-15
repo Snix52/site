@@ -61,19 +61,21 @@ h1, h2, h3, h4, .font-brand {
 ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
 
-/* ========================================= */
-/* 5. CLERK GİZLEME (YASAK TEKNİKLER) 🥷   */
-/* ========================================= */
+/* ======================================================= */
+/* 5. CLERK GİZLEME VE KARANLIK TEMA (YASAK TEKNİKLER) 🥷  */
+/* ======================================================= */
 
-/* Development Mode Rozetini Gizle */
-.cl-development-badge {
-  display: none !important;
-}
-
-/* "Secured by Clerk" Yazısını ve Footer'ı Yok Et */
-.cl-internal-b3fm6y, /* Bu Clerk'in gizli kodudur */
-.cl-footer,          /* Genel footer sınıfı */
-a[href*="clerk.com"], /* Clerk linkleri */
+/* Development Mode Rozetini ve Clerk Branding'i Her Yerden Sil */
+.cl-development-badge,
+.cl-internal-b3fm6y,
+.cl-internal-phbe3f,
+.cl-internal-16298sq,
+.cl-internal-1576t7e,
+.cl-userButtonPopoverFooter,
+.cl-userProfileFooter,
+.cl-accountSwitcherFooter,
+.cl-footer,
+a[href*="clerk.com"],
 a[href*="clerk.dev"] {
   display: none !important;
   opacity: 0 !important;
@@ -83,7 +85,97 @@ a[href*="clerk.dev"] {
   pointer-events: none !important;
 }
 
-/* Eğer yine gitmezse, en dipten vur */
+/* En inatçı rozeti ID üzerinden vur */
+[data-testid="development-badge"] {
+  display: none !important;
+}
+
+/* Eğer yine gitmezse footer'ı kökten temizle */
 div[class*="cl-footer"] {
   display: none !important;
+}
+
+/* Modal Arka Planı (Beyazlığı Bitiren Karartma) */
+.cl-modalBackdrop {
+  background-color: rgba(5, 10, 20, 0.8) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Profil Yönetim Paneli Arka Plan ve Kenarlık */
+.cl-userProfile-root,
+.cl-card {
+  background-color: #0A1120 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Scroll Alanını Senin Rengine Çek */
+.cl-scrollBox {
+  background-color: #050A14 !important;
+}
+/* ... mevcut kodlarının en altına ekle ... */
+
+/* Sol alttaki inatçı rozeti her yerden siler */
+.cl-development-badge,
+[data-testid="development-badge"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* "Secured by Clerk" ve Footer yazılarını tüm panellerde yok eder */
+.cl-userButtonPopoverFooter,
+.cl-userProfileFooter,
+.cl-accountSwitcherFooter,
+.cl-internal-b3fm6y,
+.cl-internal-phbe3f,
+.cl-internal-16298sq,
+.cl-internal-1576t7e {
+  display: none !important;
+}
+/* Mevcut kodlarının en altına ekle */
+
+/* ========================================= */
+/* NEON PROFİL TASARIMI ⚡                  */
+/* ========================================= */
+
+/* Profil Paneli ve Kartlar */
+.cl-card, .cl-userProfile-root {
+  background-color: #0A1120 !important;
+  border: 1px solid rgba(0, 255, 255, 0.2) !important;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.05) !important;
+  border-radius: 12px !important;
+}
+
+/* Aktif Sekme ve Butonlar */
+.cl-navbarMobileMenuButton, .cl-userButtonPopoverActionButton, .cl-profileSectionPrimaryButton {
+  color: #00FFFF !important;
+}
+
+.cl-activeActionButton {
+  background-color: rgba(0, 255, 255, 0.1) !important;
+  border: 1px solid #00FFFF !important;
+}
+
+/* Sidebar ve İç Bölmeler */
+.cl-navbar, .cl-scrollBox {
+  background-color: #050A14 !important;
+}
+
+/* TÜM GİZLİ REKLAM VE ROZETLERİ UÇURUR */
+.cl-development-badge,
+[data-testid="development-badge"],
+.cl-internal-b3fm6y,
+.cl-internal-phbe3f,
+.cl-internal-16298sq,
+.cl-internal-1576t7e,
+.cl-userButtonPopoverFooter,
+.cl-userProfileFooter,
+.cl-accountSwitcherFooter {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
 }
