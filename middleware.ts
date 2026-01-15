@@ -4,6 +4,7 @@ const isProtectedRoute = createRouteMatcher(['/rehberler(.*)']);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
+     // DOĞRUSU BU: auth.protect()
      await auth.protect();
   }
 });
