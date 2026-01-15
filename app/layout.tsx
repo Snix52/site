@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Rajdhani } from "next/font/google"; 
+// 1. Clerk kütüphanesini ekliyoruz
+import { ClerkProvider } from '@clerk/nextjs';
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -20,18 +22,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr">
-      {/* bg-deep-navy yerine globals.css'deki rengi kullanalım ki çakışmasın */}
-      <body className={`${inter.variable} ${rajdhani.variable} antialiased bg-[#050A14] text-slate-200`}>
-        
-        {/* Izgara katmanı (z-index globals.css'de 50 yaptık, burada en üstte görünecek) */}
-        <div className="grid-overlay"></div>
-        
-        {/* Main etiketinin z-index değerini 0'a çektik ki ızgara üstte kalsın */}
-        <main className="relative z-0 min-h-screen">
-            {children}
-        </main>
-      </body>
-    </html>
+    // 2. Tüm siteyi ClerkProvider ile sarmalıyoruz ki üyelik çalışsın
+    <ClerkProvider>
+      <html lang="tr">
+        <body className={`${inter.variable} ${rajdhani.variable} antialiased bg-[#050A14] text-slate-200`}>
+          
+          {/* Izgara katmanı */}
+          <div className="grid-overlay"></div>
+          
+          <main className="relative z-0 min-h-screen">
+              {children}
+          </main>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
