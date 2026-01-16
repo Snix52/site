@@ -8,6 +8,8 @@ import {
    Zap 
 } from '@/components/Icons';
 import Link from 'next/link';
+// Yorum bileşenini ekledik
+import CommentSection from '@/components/CommentSection';
 
 // --- YARDIMCI BİLEŞENLER ---
 
@@ -358,6 +360,11 @@ export default function JungleGuide() {
                             </Card>
                         </div>
                     )}
+                </div>
+
+                {/* --- YORUM BÖLÜMÜ ENTEGRASYONU --- */}
+                <div className="mt-16 border-t border-white/5 pt-10">
+                    <CommentSection guideId="jungle-rehberi-s16" />
                 </div>
 
                 <div className="text-center text-gray-600 text-sm mt-12 pt-8 border-t border-white/5 uppercase tracking-[0.2em]">
