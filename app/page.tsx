@@ -18,6 +18,10 @@ export default function Home() {
         
         <div className="hidden md:flex items-center gap-10">
           <Link href="/" className="text-sm font-bold text-white hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Ana Sayfa</Link>
+          
+          {/* YENİ EKLENEN LINK */}
+          <Link href="/hakkimizda" className="text-sm font-bold text-slate-400 hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Hakkımızda</Link>
+
           <Link href="/rehberler" className="text-sm font-bold text-slate-400 hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Rehberler</Link>
           <Link href="#" className="text-sm font-bold text-slate-400 hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Videolar</Link>
 
@@ -95,11 +99,11 @@ export default function Home() {
 
       </main>
 
-      {/* 3. GERÇEK VS YALAN (EŞİT BOYUTLANDIRMA GÜNCELLEMESİ) */}
+      {/* 3. GERÇEK VS YALAN */}
       <section className="py-24 bg-[#03060C] relative border-t border-white/5 z-20">
         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-8 md:gap-16 items-stretch">
             
-            {/* Sol Taraf: Clickbait (Kırmızı Çerçeve - h-full eklendi) */}
+            {/* Sol Taraf: Clickbait */}
             <div className="flex flex-col h-full space-y-8 bg-red-950/10 p-8 rounded-3xl border border-red-900/30">
                 <h3 className="text-2xl font-black text-red-500 uppercase tracking-widest flex items-center gap-3">
                     <XCircle className="w-8 h-8" />
@@ -115,7 +119,7 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* Sağ Taraf: Snix (Cyan Çerçeve - h-full eklendi ve madde sayısı artırıldı) */}
+            {/* Sağ Taraf: Snix */}
             <div className="flex flex-col h-full space-y-8 bg-[#00FFFF]/5 p-8 rounded-3xl border border-[#00FFFF]/20 relative">
                 <div className="absolute inset-0 bg-[#00FFFF]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <h3 className="text-2xl font-black text-[#00FFFF] uppercase tracking-widest flex items-center gap-3 relative z-10">
@@ -132,7 +136,6 @@ export default function Home() {
                             <span className="text-slate-400 font-normal block text-sm mb-1 uppercase tracking-widest">Dalga Fiziği</span>
                             Minyonları dondurarak (Freeze) rakibi XP ve altından mahrum bırakma teknikleri
                         </li>
-                        {/* Yeni Eklenen Maddeler */}
                         <li className="text-white text-lg font-bold">
                             <span className="text-slate-400 font-normal block text-sm mb-1 uppercase tracking-widest">Tempo Kontrolü</span>
                             Base atma zamanlamasını (Recall) markete göre değil, harita temposuna göre belirlemek.
