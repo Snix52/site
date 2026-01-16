@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // <-- BU SATIR GERİ GELECEK
+  url      = env("DATABASE_URL")
 }
 
 model Comment {
@@ -17,4 +17,7 @@ model Comment {
   userImage String
 
   guideId   String
+
+  // YENİ ÖZELLİK: Onay sistemi
+  isApproved Boolean @default(false)
 }

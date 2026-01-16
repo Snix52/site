@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { currentUser } from '@clerk/nextjs/server';
 
-// YORUMLARI GETİR (GET)
+// 1. GET: SADECE ONAYLANMIŞ YORUMLARI GETİR
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -13,8 +13,11 @@ export async function GET(request: Request) {
     }
 
     const comments = await prisma.comment.findMany({
-      where: { guideId },
-      orderBy: { createdAt: 'desc' }, // En yeni yorum en üstte
+      where: { 
+        guideId,
+        isApproved: true // <-- Sadece onaylılar gözükecek
+      },
+      orderBy: { createdAt: 'desc' },
     });
 
     return NextResponse.json(comments);
@@ -23,17 +26,15 @@ export async function GET(request: Request) {
   }
 }
 
-// YORUM EKLE (POST)
+// 2. POST: YORUMU KAYDET (AMA ONAYSIZ OLARAK)
 export async function POST(request: Request) {
   try {
-    // 1. Kullanıcı giriş yapmış mı kontrol et
     const user = await currentUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Giriş yapmalısın' }, { status: 401 });
     }
 
-    // 2. Yorum verisini al
     const body = await request.json();
     const { content, guideId } = body;
 
@@ -41,14 +42,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'İçerik eksik' }, { status: 400 });
     }
 
-    // 3. Veritabanına kaydet
+    // İstersen buraya kendi Clerk ID'ni yazarak kendini yönetici yapabilirsin.
+    // Şimdilik herkes onaya düşecek.
+    const isAdmin = false; 
+
     const newComment = await prisma.comment.create({
       data: {
         content,
         guideId,
         userId: user.id,
-        username: user.firstName || user.username || 'İsimsiz Oyuncu', // İsim yoksa 'İsimsiz' yap
+        username: user.firstName || user.username || 'İsimsiz Oyuncu',
         userImage: user.imageUrl,
+        isApproved: isAdmin ? true : false, // Admin değilse onay bekle
       },
     });
 
