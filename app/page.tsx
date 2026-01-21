@@ -1,19 +1,35 @@
+"use client";
+
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { SnixLogo, Play, Brain, Target, Zap, CheckCircle, XCircle, ChevronDown } from '@/components/Icons'; 
-// Navbar ve Clerk importlarını sildik çünkü burada kullanmıyoruz, layout hallediyor.
 
 export default function Home() {
-  return (
-    <div className="min-h-screen bg-[#050A14] flex flex-col relative overflow-hidden font-sans">
-      
-      {/* NAVBAR BURADAN SİLİNDİ (Layout'tan geliyor) */}
+  // ⚡ Kaydırma noktası için referans oluşturduk
+  const scrollTargetRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    // Sayfa yüklendiğinde ufak bir gecikmeyle (render tamamlansın diye) aşağıya kaydırıyoruz
+    const timer = setTimeout(() => {
+      scrollTargetRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'end' // "Kaydır" yazısını ekranın en altına hizalar
+      });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[#050A14] flex flex-col relative overflow-x-clip font-sans">
+      
       {/* 2. HERO SECTION */}
-      <main className="min-h-[calc(100vh-100px)] flex flex-col justify-center items-center text-center px-4 relative z-10 pb-20">
+      <main className="min-h-screen flex flex-col justify-center items-center text-center px-4 relative z-10 pt-24 pb-20 overflow-visible">
         
-        <div className="mb-8 relative group">
-          <div className="absolute inset-0 bg-[#00FFFF]/10 blur-3xl rounded-full scale-150 animate-pulse"></div>
-          <SnixLogo className="w-32 h-32 relative z-10 drop-shadow-[0_0_25px_rgba(0,255,255,0.4)]" /> 
+        {/* LOGO BÖLGESİ - Kesintisiz Aura */}
+        <div className="mb-8 relative group flex items-center justify-center overflow-visible">
+          <div className="absolute inset-0 bg-[#00FFFF]/10 blur-[100px] rounded-full scale-[2.5] animate-pulse pointer-events-none transform-gpu"></div>
+          <SnixLogo className="w-32 h-32 md:w-40 md:h-40 relative z-10 drop-shadow-[0_0_35px_rgba(0,255,255,0.4)] transition-transform duration-500 group-hover:scale-110" /> 
         </div>
 
         <p className="text-[#00FFFF] font-bold tracking-[0.6em] uppercase text-sm md:text-base mb-6 opacity-90 animate-fade-in">
@@ -32,7 +48,7 @@ export default function Home() {
           <span className="text-white font-bold">Snix GG</span> ile Elo Hell'den çıkış biletin burada.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-5 items-center justify-center mb-16">
+        <div className="flex flex-col sm:flex-row gap-5 items-center justify-center mb-16 relative z-20">
           <Link href="/rehberler" 
                 className="px-10 py-4 bg-[#00FFFF] hover:bg-white text-black font-black text-xs uppercase tracking-[0.25em] rounded-sm transition-all hover:scale-105 shadow-[0_0_20px_rgba(0,255,255,0.4)]">
             HEMEN BAŞLA (REHBER)
@@ -44,19 +60,20 @@ export default function Home() {
           </button>
         </div>
 
-        {/* KAYDIRMA İŞARETİ */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce opacity-70 cursor-pointer">
+        {/* ⚡ KAYDIRMA İŞARETİ VE TARGET REF */}
+        <div 
+          ref={scrollTargetRef} 
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce opacity-70 cursor-pointer"
+        >
             <span className="text-[10px] text-[#00FFFF] font-bold tracking-[0.3em] uppercase">Kaydır</span>
             <ChevronDown className="w-6 h-6 text-white drop-shadow-[0_0_5px_rgba(0,255,255,0.8)]" />
         </div>
-
       </main>
 
       {/* 3. GERÇEK VS YALAN */}
-      <section className="py-24 bg-[#03060C] relative border-t border-white/5 z-20">
+      <section className="py-24 bg-[#03060C] relative border-t border-white/5 z-20 overflow-visible">
         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-8 md:gap-16 items-stretch">
             
-            {/* Sol Taraf: Clickbait */}
             <div className="flex flex-col h-full space-y-8 bg-red-950/10 p-8 rounded-3xl border border-red-900/30">
                 <h3 className="text-2xl font-black text-red-500 uppercase tracking-widest flex items-center gap-3">
                     <XCircle className="w-8 h-8" />
@@ -72,8 +89,7 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* Sağ Taraf: Snix */}
-            <div className="flex flex-col h-full space-y-8 bg-[#00FFFF]/5 p-8 rounded-3xl border border-[#00FFFF]/20 relative">
+            <div className="flex flex-col h-full space-y-8 bg-[#00FFFF]/5 p-8 rounded-3xl border border-[#00FFFF]/20 relative overflow-visible">
                 <div className="absolute inset-0 bg-[#00FFFF]/5 blur-3xl rounded-full pointer-events-none"></div>
                 <h3 className="text-2xl font-black text-[#00FFFF] uppercase tracking-widest flex items-center gap-3 relative z-10">
                     <CheckCircle className="w-8 h-8" />
@@ -87,11 +103,11 @@ export default function Home() {
                         </li>
                         <li className="text-white text-lg font-bold">
                             <span className="text-slate-400 font-normal block text-sm mb-1 uppercase tracking-widest">Dalga Fiziği</span>
-                            Minyonları dondurarak (Freeze) rakibi XP ve altından mahrum bırakma teknikleri
+                            Minyonları dondurarak (Freeze) rakibi XP ve altından mahrum bırakma teknikleri.
                         </li>
                         <li className="text-white text-lg font-bold">
                             <span className="text-slate-400 font-normal block text-sm mb-1 uppercase tracking-widest">Tempo Kontrolü</span>
-                            Base atma zamanlamasını (Recall) markete göre değil, harita temposuna göre belirlemek.
+                            Base atma zamanlamasını markete göre değil, harita temposuna göre belirlemek.
                         </li>
                          <li className="text-white text-lg font-bold">
                             <span className="text-slate-400 font-normal block text-sm mb-1 uppercase tracking-widest">Orman Takibi</span>
@@ -118,7 +134,7 @@ export default function Home() {
                     <Brain className="w-10 h-10 text-[#00FFFF] mb-6 group-hover:scale-110 transition-transform" />
                     <h3 className="text-xl font-bold text-white mb-3 uppercase tracking-wider">Makro Strateji</h3>
                     <p className="text-slate-400 leading-relaxed text-sm">
-                        Baron ne zaman zorlanır? Ejder ne zaman verilir? Haritanın neresinde olman gerektiğini saniyesi saniyesine planla.
+                        Baron ne zaman zorlanır? Ejder ne zaman verilir? Haritanın neresinde olman gerektiğini planla.
                     </p>
                 </div>
 
@@ -126,7 +142,7 @@ export default function Home() {
                     <Target className="w-10 h-10 text-[#00FFFF] mb-6 group-hover:scale-110 transition-transform" />
                     <h3 className="text-xl font-bold text-white mb-3 uppercase tracking-wider">Matchup Analizi</h3>
                     <p className="text-slate-400 leading-relaxed text-sm">
-                        Karşındaki şampiyonun zayıf anlarını (cooldown pencerelerini) ezberle. Takasa girmek için doğru anı bekleme, o anı yarat.
+                        Karşındaki şampiyonun zayıf anlarını ezberle. Takasa girmek için o anı yarat.
                     </p>
                 </div>
 
@@ -134,14 +150,13 @@ export default function Home() {
                     <Zap className="w-10 h-10 text-[#00FFFF] mb-6 group-hover:scale-110 transition-transform" />
                     <h3 className="text-xl font-bold text-white mb-3 uppercase tracking-wider">Tempo Yönetimi</h3>
                     <p className="text-slate-400 leading-relaxed text-sm">
-                        Base atma zamanlaması (Recall timing) oyunu kazandırır veya kaybettirir. Temponu koru, rakibi haritadan sil.
+                        Base atma zamanlaması (Recall timing) oyunu kazandırır veya kaybettirir.
                     </p>
                 </div>
             </div>
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="py-8 border-t border-white/5 bg-black text-center relative z-20">
         <p className="text-slate-600 text-xs font-bold uppercase tracking-widest">
             © 2026 SNIX.GG • BY MASTER TIER PLAYER FOR PLAYERS
