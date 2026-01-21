@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
+// Navbar'ı sildik, çünkü layout'tan geliyor.
 import { ArrowLeft, Brain, Shield, Timer } from '@/components/Icons';
 
 export default function GuidesHub() {
@@ -9,8 +9,7 @@ export default function GuidesHub() {
     <div className="min-h-screen bg-[#050A14] font-sans text-slate-200 relative overflow-hidden">
       <div className="grid-overlay"></div>
       
-      {/* Üst Navigasyon */}
-      <Navbar />
+      {/* Üst Navigasyon BURADAN KALDIRILDI (Otomatik Geliyor) */}
 
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-20">
         

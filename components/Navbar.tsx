@@ -1,10 +1,40 @@
+"use client";
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { SnixLogo } from '@/components/Icons'; 
-import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
+import { Trophy, Sparkles, ShieldAlert } from 'lucide-react'; 
+import NotificationBell from './NotificationBell'; // <-- YENİ EKLENDİ
 
 export default function Navbar() {
+  const { user, isSignedIn } = useUser();
+  const [points, setPoints] = useState(0);
+  const [showRewardAnimation, setShowRewardAnimation] = useState(false);
+
+  // SENİN ID'N (Admin Butonu İçin)
+  const ADMIN_ID = "user_38IQNX84WzWPGgn1wdzcOWogLaN";
+  const isAdmin = user?.id === ADMIN_ID;
+
+  useEffect(() => {
+    if (isSignedIn) {
+      fetch('/api/user/sync', { method: 'POST' })
+        .then((res) => res.json())
+        .then((data) => {
+          // Ban kontrolü artık BanGuard içinde, burası sadece puanı alır
+          if (data.points !== undefined) setPoints(data.points);
+          if (data.rewardGiven) {
+            setShowRewardAnimation(true);
+            setTimeout(() => setShowRewardAnimation(false), 5000);
+          }
+        })
+        .catch((err) => console.error("Puan servisi hatası:", err));
+    }
+  }, [isSignedIn]);
+
   return (
-    <nav className="relative z-[60] flex justify-between items-center px-8 py-6 max-w-full w-full bg-[#050A14]/90 backdrop-blur-md border-b border-white/5 shadow-2xl">
+    <nav className="fixed top-0 left-0 z-[100] flex justify-between items-center px-8 py-6 w-full bg-[#050A14]/85 border-b border-white/5 shadow-2xl transition-all">
+        
         <div className="flex items-center gap-3 group cursor-pointer">
            <Link href="/" className="flex items-center gap-3">
             <SnixLogo className="w-[50px] h-[50px] drop-shadow-[0_0_10px_rgba(0,255,255,0.6)] transition-transform group-hover:scale-110" />
@@ -16,15 +46,17 @@ export default function Navbar() {
         
         <div className="hidden md:flex items-center gap-10">
           <Link href="/" className="text-sm font-bold text-slate-400 hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Ana Sayfa</Link>
-          
-          {/* YENİ EKLENEN LINK */}
           <Link href="/hakkimizda" className="text-sm font-bold text-slate-400 hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Hakkımızda</Link>
-
           <Link href="/rehberler" className="text-sm font-bold text-slate-400 hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Rehberler</Link>
-          <Link href="#" className="text-sm font-bold text-slate-400 hover:text-[#00FFFF] transition-colors uppercase tracking-[0.2em]">Videolar</Link>
+          
+          {/* SADECE ADMIN GÖRÜR */}
+          {isAdmin && (
+            <Link href="/admin" className="flex items-center gap-2 text-sm font-black text-red-500 hover:text-red-400 transition-colors uppercase tracking-[0.2em] border border-red-500/20 px-3 py-1 rounded bg-red-500/10">
+               <ShieldAlert size={16} /> ADMIN
+            </Link>
+          )}
 
-          {/* GİRİŞ VE KAYIT BUTONLARI */}
-          <div className="ml-4 border-l border-white/10 pl-6">
+          <div className="ml-4 border-l border-white/10 pl-6 flex items-center gap-4">
             <SignedOut>
               <div className="flex items-center gap-4">
                 <Link href="/sign-in">
@@ -37,6 +69,18 @@ export default function Navbar() {
             </SignedOut>
 
             <SignedIn>
+              {/* PUAN */}
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#00FFFF]/10 border border-[#00FFFF]/30 transition-all ${showRewardAnimation ? 'animate-pulse ring-1 ring-[#00FFFF]' : ''}`}>
+                 {showRewardAnimation && <Sparkles className="w-4 h-4 text-yellow-400 animate-spin" />}
+                 <Trophy className="w-4 h-4 text-[#00FFFF]" />
+                 <span className="text-[#00FFFF] font-black text-sm tracking-widest">{points} SP</span>
+              </div>
+
+              {/* BİLDİRİM ZİLİ (YENİ) */}
+              <div className="mx-2">
+                 <NotificationBell />
+              </div>
+
               <UserButton 
                 appearance={{
                   elements: {

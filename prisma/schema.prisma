@@ -7,17 +7,66 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 1. KULLANICI TABLOSU
+model User {
+  id        String   @id // Clerk ID
+  email     String?
+  username  String?
+  firstName String?
+  lastName  String?
+  imageUrl  String?
+
+  currentPoints Int @default(0)
+  totalEarned   Int @default(0)
+  
+  isBanned      Boolean @default(false)
+
+  lastLoginDate DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // İLİŞKİLER (Hata veren yer burasıydı, şimdi düzeldi)
+  comments      Comment[]
+  transactions  PointTransaction[]
+  notifications Notification[] // <-- BU SATIR EKSİKTİ
+}
+
+// 2. YORUM TABLOSU
 model Comment {
   id        String   @id @default(cuid())
   content   String
   createdAt DateTime @default(now())
   
   userId    String
-  username  String
-  userImage String
+  user      User     @relation(fields: [userId], references: [id])
 
   guideId   String
-
-  // YENİ ÖZELLİK: Onay sistemi
   isApproved Boolean @default(false)
+}
+
+// 3. PUAN GEÇMİŞİ
+model PointTransaction {
+  id          String   @id @default(cuid())
+  amount      Int
+  type        String
+  description String?
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+// 4. BİLDİRİMLER (YENİ)
+model Notification {
+  id        String   @id @default(cuid())
+  title     String   
+  message   String   
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, GIFT
+  isRead    Boolean  @default(false)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
 }
