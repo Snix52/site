@@ -9,32 +9,35 @@ export async function POST() {
 
     const userId = user.id;
 
-    // Kullanıcıyı bul
-    let dbUser = await prisma.user.findUnique({ where: { id: userId } });
-
-    // Kullanıcı yoksa oluştur
-    if (!dbUser) {
-      dbUser = await prisma.user.create({
-        data: {
-          id: userId,
-          email: user.emailAddresses[0]?.emailAddress,
-          username: user.username || "Oyuncu",
-          firstName: user.firstName,
-          lastName: user.lastName,
-          imageUrl: user.imageUrl,
-          currentPoints: 0,
-          totalEarned: 0,
-          lastLoginDate: new Date(0),
-        },
-      });
-    }
+    // KULLANICIYI BUL VEYA OLUŞTUR (UPSERT)
+    // Buradaki kritik nokta: firstName ve lastName bilgilerini de güncelliyoruz.
+    const dbUser = await prisma.user.upsert({
+      where: { id: userId },
+      update: {
+        lastLoginDate: new Date(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        imageUrl: user.imageUrl,
+      },
+      create: {
+        id: userId,
+        email: user.emailAddresses[0]?.emailAddress || "",
+        username: user.username || `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Oyuncu",
+        firstName: user.firstName,
+        lastName: user.lastName,
+        imageUrl: user.imageUrl,
+        currentPoints: 10,
+        totalEarned: 10,
+        lastLoginDate: new Date(),
+      },
+    });
 
     // BAN KONTROLÜ
     if (dbUser.isBanned) {
       return NextResponse.json({ banned: true, points: 0 });
     }
 
-    // ÖDÜL MANTIĞI
+    // GÜNLÜK ÖDÜL MANTIĞI
     const now = new Date();
     const lastLogin = new Date(dbUser.lastLoginDate);
     const diffHours = Math.abs(now.getTime() - lastLogin.getTime()) / 36e5;
@@ -43,7 +46,6 @@ export async function POST() {
     let rewardGiven = false;
 
     if (isEligible) {
-      // 1. İşlem Kaydı
       await prisma.pointTransaction.create({
         data: {
           amount: 10,
@@ -53,36 +55,25 @@ export async function POST() {
         },
       });
 
-      // 2. BİLDİRİM OLUŞTUR (YENİ EKLEME) 🔥
-      await prisma.notification.create({
-        data: {
-            userId: userId,
-            title: dbUser.totalEarned === 0 ? "Aramıza Hoşgeldin!" : "Günlük Ödül",
-            message: "Hesabına 10 SP yüklendi. Yarın yine bekleriz!",
-            type: "GIFT"
-        }
-      });
-
-      // 3. Puanı Ver
-      dbUser = await prisma.user.update({
+      await prisma.user.update({
         where: { id: userId },
         data: {
           currentPoints: { increment: 10 },
           totalEarned: { increment: 10 },
-          lastLoginDate: now,
-        },
+          lastLoginDate: now
+        }
       });
       rewardGiven = true;
     }
 
     return NextResponse.json({ 
-      points: dbUser.currentPoints, 
-      rewardGiven: rewardGiven,
-      banned: false 
+      success: true, 
+      rewardGiven,
+      points: dbUser.currentPoints + (rewardGiven ? 10 : 0)
     });
 
   } catch (error) {
-    console.error("Sync Hatası:", error);
-    return NextResponse.json({ error: 'Sync failed' }, { status: 500 });
+    console.error('Sync Error:', error);
+    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
   }
 }

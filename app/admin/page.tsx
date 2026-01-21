@@ -189,9 +189,11 @@ export default async function AdminDashboard() {
                                         <Image src={u.imageUrl || "/file.svg"} alt="" width={40} height={40} className="rounded-full border border-white/10" />
                                         <div>
                                             <p className={`font-bold ${u.isBanned ? 'text-red-500 line-through' : 'text-white'}`}>
-                                                {u.username || "İsimsiz"}
-                                            </p>
-                                            <p className="text-[10px] text-gray-600">ID: {u.id.slice(0, 8)}...</p>
+  {u.firstName || u.lastName 
+    ? `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() 
+    : (u.username || "Oyuncu")}
+</p>
+                                            <p className="text-[10px] text-gray-600 font-mono tracking-tighter">ID: {u.id}</p>
                                         </div>
                                     </div>
                                 </td>

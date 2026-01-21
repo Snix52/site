@@ -4,15 +4,18 @@
 /* 2. SONRA TAILWIND */
 @import "tailwindcss";
 
-/* 3. LOGO ANİMASYONLARI (Saf CSS) */
+/* 3. LOGO ANİMASYONLARI (GPU DESTEKLİ) */
 .logo-draw {
   stroke-dasharray: 400;
   stroke-dashoffset: 400;
   animation: logoDrawEffect 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: stroke-dashoffset; /* Tarayıcıya önceden haber veriyoruz */
 }
 
 .logo-flicker {
   animation: logoFlickerEffect 3s ease-in-out infinite;
+  /* GPU İvmelenmesi */
+  transform: translateZ(0); 
 }
 
 @keyframes logoDrawEffect {
@@ -21,8 +24,8 @@
 }
 
 @keyframes logoFlickerEffect {
-  0%, 100% { opacity: 1; filter: brightness(1.2) drop-shadow(0 0 5px #00ffff); }
-  50% { opacity: 0.8; filter: brightness(0.9) drop-shadow(0 0 2px #00ffff); }
+  0%, 100% { opacity: 1; filter: brightness(1.1) drop-shadow(0 0 3px #00ffff); }
+  50% { opacity: 0.9; filter: brightness(0.9) drop-shadow(0 0 1px #00ffff); }
 }
 
 /* 4. GENEL AYARLAR */
@@ -37,6 +40,9 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', sans-serif;
+  /* Sayfa geçişlerinde titremeyi engeller */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4, .font-brand {
@@ -48,11 +54,13 @@ h1, h2, h3, h4, .font-brand {
   position: fixed;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 50px 50px;
   pointer-events: none;
   z-index: 50;
+  /* Tüm ekranı kapladığı için işlemciyi yormaması için sabitliyoruz */
+  transform: translateZ(0);
 }
 
 ::-webkit-scrollbar { width: 8px; }
@@ -61,7 +69,7 @@ h1, h2, h3, h4, .font-brand {
 ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
 
 /* ======================================================= */
-/* 5. CLERK GİZLEME VE KARANLIK TEMA (YASAK TEKNİKLER) 🥷  */
+/* 5. CLERK GİZLEME VE KARANLIK TEMA 🥷                     */
 /* ======================================================= */
 
 .cl-development-badge,
@@ -78,122 +86,79 @@ a[href*="clerk.dev"] {
   display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
-  height: 0 !important;
-  width: 0 !important;
   pointer-events: none !important;
 }
 
-[data-testid="development-badge"] {
-  display: none !important;
-}
-
-div[class*="cl-footer"] {
-  display: none !important;
-}
-
 .cl-modalBackdrop {
-  background-color: rgba(5, 10, 20, 0.8) !important;
-  backdrop-filter: blur(4px);
-}
-
-.cl-userProfile-root,
-.cl-card {
-  background-color: #0A1120 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.cl-scrollBox {
-  background-color: #050A14 !important;
+  background-color: rgba(5, 10, 20, 0.7) !important;
+  backdrop-filter: blur(8px); /* Blur miktarını sabitledik */
 }
 
 /* ========================================= */
-/* NEON PROFİL TASARIMI ⚡                  */
+/* 🌀 HEXTECH ÇİFT KATMAN (PERFORMANS MODU)  */
 /* ========================================= */
 
-.cl-card, .cl-userProfile-root {
-  background-color: #0A1120 !important;
-  border: 1px solid rgba(0, 255, 255, 0.2) !important;
-  box-shadow: 0 0 30px rgba(0, 255, 255, 0.05) !important;
-  border-radius: 12px !important;
-}
 
-.cl-navbarMobileMenuButton, .cl-userButtonPopoverActionButton, .cl-profileSectionPrimaryButton {
-  color: #00FFFF !important;
-}
 
-.cl-activeActionButton {
-  background-color: rgba(0, 255, 255, 0.1) !important;
-  border: 1px solid #00FFFF !important;
-}
-
-.cl-navbar, .cl-scrollBox {
-  background-color: #050A14 !important;
-}
-
-/* ========================================= */
-/* 🌀 HEXTECH ÇİFT KATMAN ANİMASYONU       */
-/* ========================================= */
-
-/* 1. SADECE ÇERÇEVE DÖNER (Jiroskop) */
 @keyframes frame-gyro-spin {
   0% {
     opacity: 0;
-    /* Çerçeve 3 Tur (1080deg) atar, her yöne döner */
     transform: perspective(1000px) rotate3d(1, 0.5, 0.8, 1080deg) scale(0.5);
-    filter: brightness(2) drop-shadow(0 0 20px #00FFFF);
   }
   80% {
-    /* Hafif taşma yapar */
-    transform: perspective(1000px) rotate3d(1, 0.5, 0.8, 20deg) scale(1.1);
+    transform: perspective(1000px) rotate3d(1, 0.5, 0.8, 20deg) scale(1.05);
     opacity: 1;
   }
   100% {
-    /* Yerine oturur */
     transform: perspective(1000px) rotate3d(0, 0, 0, 0deg) scale(1);
-    filter: brightness(1);
     opacity: 1;
   }
 }
 
-/* 2. LOGO SABİTTİR (Sadece Büyür) */
 @keyframes core-pop-in {
   0% {
     opacity: 0;
-    transform: scale(0); /* Yoktan var olur */
-    filter: blur(10px);
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1.2); /* Biraz öne gelir */
-    filter: blur(0);
+    transform: scale(0);
+    filter: blur(5px);
   }
   100% {
     opacity: 1;
-    transform: scale(1); /* Yerine oturur */
+    transform: scale(1);
+    filter: blur(0);
   }
 }
 
 .animate-frame-spin {
   animation: frame-gyro-spin 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-style: preserve-3d;
+  will-change: transform, opacity; /* GPU'ya "hazırlan" diyoruz */
+  backface-visibility: hidden;
 }
 
 .animate-core-pop {
-  animation: core-pop-in 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: core-pop-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
 }
+
 /* ========================================= */
-/* 🌊 NEON AKIŞ EFEKTİ (AKICI DÖNGÜ)       */
+/* 🌊 NEON AKIŞ EFEKTİ (AKICI DÖNGÜ)         */
 /* ========================================= */
 
 @keyframes dash-flow {
   to {
-    /* Halkanın çevresi yaklaşık 314px. Tam bir tur atması için bunu kullanıyoruz. */
-    /* Böylece başlangıç ve bitiş noktaları örtüşür, takılma olmaz. */
     stroke-dashoffset: -314;
   }
 }
 
 .animate-energy-flow {
-  /* Hız 10 saniye, kesintisiz akış */
   animation: dash-flow 10s linear infinite;
+  /* Stroke animasyonları için performans iyileştirmesi */
+  shape-rendering: optimizeSpeed;
+}
+
+/* EKSTRA: Sitenin genelinde kasmayı önleyen yardımcı sınıf */
+.gpu-fix {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }

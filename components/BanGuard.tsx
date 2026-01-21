@@ -1,65 +1,72 @@
 "use client";
 
 import { useUser, UserButton } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
-import { Ban } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Ban, Loader2 } from "lucide-react";
 
 export default function BanGuard({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useUser();
   const [isBanned, setIsBanned] = useState(false);
-  const [checking, setChecking] = useState(true); // Başlangıçta "Kontrol Ediyorum" modundayız
+  const [checking, setChecking] = useState(true);
+  
+  // 🛡️ KRİTİK KİLİT: Sayfa açık kaldığı sürece bu kontrolü SADECE 1 KERE yapar.
+  const hasVerified = useRef(false);
 
   useEffect(() => {
-    // 1. Clerk yüklenmediyse bekle
-    if (!isLoaded) return;
+    // Clerk yüklenmediyse veya zaten kontrol edildiyse dur.
+    if (!isLoaded || hasVerified.current) return;
 
-    // 2. Giriş yapmışsa API'ye sor
     if (isSignedIn) {
+      hasVerified.current = true; // İsteği atmadan kilidi vuruyoruz.
+
       fetch('/api/user/sync', { method: 'POST' })
         .then((res) => res.json())
         .then((data) => {
           if (data.banned) {
-            setIsBanned(true); // Adam banlı!
+            setIsBanned(true);
           }
         })
-        .finally(() => setChecking(false)); // Kontrol bitti, karar verelim
+        .catch(err => {
+          console.error("Ban kontrol hatası:", err);
+          hasVerified.current = false; // Hata olursa tekrar denesin diye kilidi açarız.
+        })
+        .finally(() => setChecking(false));
     } else {
-      setChecking(false); // Giriş yapmamışsa ban kontrolüne gerek yok
+      setChecking(false);
     }
   }, [isSignedIn, isLoaded]);
 
-  // AŞAMA 1: YÜKLENİYOR (Siyah Ekran)
-  // Kontrol bitmeden siteyi ASLA gösterme.
+  // AŞAMA 1: YÜKLENİYOR (Şık bir neon loader)
   if (checking) {
     return (
-      <div className="min-h-screen bg-[#050A14] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00FFFF]"></div>
+      <div className="min-h-screen bg-[#050A14] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-12 h-12 text-[#00FFFF] animate-spin" />
+        <p className="text-[#00FFFF] font-black text-xs uppercase tracking-[0.3em] animate-pulse">
+          Sistemler Kontrol Ediliyor...
+        </p>
       </div>
     );
   }
 
   // AŞAMA 2: BANLI (Kırmızı Duvar)
-  // Eğer banlıysa sadece bunu göster. {children} yani siteyi HİÇ RENDER ETME.
   if (isBanned) {
     return (
       <div className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center text-center p-10 font-sans h-screen w-screen">
-        <div className="animate-pulse">
-            <Ban className="w-32 h-32 text-red-600 mb-6 mx-auto" />
+        <div className="animate-bounce">
+            <Ban className="w-24 h-24 text-red-600 mb-6 mx-auto drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]" />
         </div>
-        <h1 className="text-6xl font-black text-red-600 mb-4 uppercase tracking-tighter glitch-effect">
-            YASAKLANDINIZ
+        <h1 className="text-5xl font-black text-red-600 mb-4 uppercase tracking-tighter">
+            ERİŞİM ENGELLENDİ
         </h1>
-        <p className="text-gray-400 text-lg max-w-md mb-8">
-           Erişim engellendi.
+        <p className="text-gray-500 text-sm max-w-md mb-10 font-bold uppercase tracking-widest">
+           Topluluk kurallarını ihlal ettiğin için bu hesaba kilit vurulmuştur.
         </p>
-        <div className="scale-150 border-2 border-red-600 rounded-full">
+        <div className="p-1 bg-red-600 rounded-full shadow-[0_0_30px_rgba(220,38,38,0.4)]">
             <UserButton afterSignOutUrl="/"/>
         </div>
       </div>
     );
   }
 
-  // AŞAMA 3: TEMİZ (Siteyi Aç)
-  // Sadece temizse site içeriğini (children) göster.
   return <>{children}</>;
 }
