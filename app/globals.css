@@ -8,7 +8,6 @@
 .logo-draw {
   stroke-dasharray: 400;
   stroke-dashoffset: 400;
-  /* 3 saniyede çizip bitirir */
   animation: logoDrawEffect 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
@@ -65,7 +64,6 @@ h1, h2, h3, h4, .font-brand {
 /* 5. CLERK GİZLEME VE KARANLIK TEMA (YASAK TEKNİKLER) 🥷  */
 /* ======================================================= */
 
-/* Development Mode Rozetini ve Clerk Branding'i Her Yerden Sil */
 .cl-development-badge,
 .cl-internal-b3fm6y,
 .cl-internal-phbe3f,
@@ -85,61 +83,33 @@ a[href*="clerk.dev"] {
   pointer-events: none !important;
 }
 
-/* En inatçı rozeti ID üzerinden vur */
 [data-testid="development-badge"] {
   display: none !important;
 }
 
-/* Eğer yine gitmezse footer'ı kökten temizle */
 div[class*="cl-footer"] {
   display: none !important;
 }
 
-/* Modal Arka Planı (Beyazlığı Bitiren Karartma) */
 .cl-modalBackdrop {
   background-color: rgba(5, 10, 20, 0.8) !important;
   backdrop-filter: blur(4px);
 }
 
-/* Profil Yönetim Paneli Arka Plan ve Kenarlık */
 .cl-userProfile-root,
 .cl-card {
   background-color: #0A1120 !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Scroll Alanını Senin Rengine Çek */
 .cl-scrollBox {
   background-color: #050A14 !important;
 }
-/* ... mevcut kodlarının en altına ekle ... */
-
-/* Sol alttaki inatçı rozeti her yerden siler */
-.cl-development-badge,
-[data-testid="development-badge"] {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
-/* "Secured by Clerk" ve Footer yazılarını tüm panellerde yok eder */
-.cl-userButtonPopoverFooter,
-.cl-userProfileFooter,
-.cl-accountSwitcherFooter,
-.cl-internal-b3fm6y,
-.cl-internal-phbe3f,
-.cl-internal-16298sq,
-.cl-internal-1576t7e {
-  display: none !important;
-}
-/* Mevcut kodlarının en altına ekle */
 
 /* ========================================= */
 /* NEON PROFİL TASARIMI ⚡                  */
 /* ========================================= */
 
-/* Profil Paneli ve Kartlar */
 .cl-card, .cl-userProfile-root {
   background-color: #0A1120 !important;
   border: 1px solid rgba(0, 255, 255, 0.2) !important;
@@ -147,7 +117,6 @@ div[class*="cl-footer"] {
   border-radius: 12px !important;
 }
 
-/* Aktif Sekme ve Butonlar */
 .cl-navbarMobileMenuButton, .cl-userButtonPopoverActionButton, .cl-profileSectionPrimaryButton {
   color: #00FFFF !important;
 }
@@ -157,25 +126,74 @@ div[class*="cl-footer"] {
   border: 1px solid #00FFFF !important;
 }
 
-/* Sidebar ve İç Bölmeler */
 .cl-navbar, .cl-scrollBox {
   background-color: #050A14 !important;
 }
 
-/* TÜM GİZLİ REKLAM VE ROZETLERİ UÇURUR */
-.cl-development-badge,
-[data-testid="development-badge"],
-.cl-internal-b3fm6y,
-.cl-internal-phbe3f,
-.cl-internal-16298sq,
-.cl-internal-1576t7e,
-.cl-userButtonPopoverFooter,
-.cl-userProfileFooter,
-.cl-accountSwitcherFooter {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  height: 0 !important;
-  width: 0 !important;
+/* ========================================= */
+/* 🌀 HEXTECH ÇİFT KATMAN ANİMASYONU       */
+/* ========================================= */
+
+/* 1. SADECE ÇERÇEVE DÖNER (Jiroskop) */
+@keyframes frame-gyro-spin {
+  0% {
+    opacity: 0;
+    /* Çerçeve 3 Tur (1080deg) atar, her yöne döner */
+    transform: perspective(1000px) rotate3d(1, 0.5, 0.8, 1080deg) scale(0.5);
+    filter: brightness(2) drop-shadow(0 0 20px #00FFFF);
+  }
+  80% {
+    /* Hafif taşma yapar */
+    transform: perspective(1000px) rotate3d(1, 0.5, 0.8, 20deg) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    /* Yerine oturur */
+    transform: perspective(1000px) rotate3d(0, 0, 0, 0deg) scale(1);
+    filter: brightness(1);
+    opacity: 1;
+  }
+}
+
+/* 2. LOGO SABİTTİR (Sadece Büyür) */
+@keyframes core-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0); /* Yoktan var olur */
+    filter: blur(10px);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.2); /* Biraz öne gelir */
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1); /* Yerine oturur */
+  }
+}
+
+.animate-frame-spin {
+  animation: frame-gyro-spin 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-style: preserve-3d;
+}
+
+.animate-core-pop {
+  animation: core-pop-in 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+/* ========================================= */
+/* 🌊 NEON AKIŞ EFEKTİ (AKICI DÖNGÜ)       */
+/* ========================================= */
+
+@keyframes dash-flow {
+  to {
+    /* Halkanın çevresi yaklaşık 314px. Tam bir tur atması için bunu kullanıyoruz. */
+    /* Böylece başlangıç ve bitiş noktaları örtüşür, takılma olmaz. */
+    stroke-dashoffset: -314;
+  }
+}
+
+.animate-energy-flow {
+  /* Hız 10 saniye, kesintisiz akış */
+  animation: dash-flow 10s linear infinite;
 }

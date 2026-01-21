@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { SnixLogo } from '@/components/Icons'; 
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
-import { Trophy, Sparkles, ShieldAlert } from 'lucide-react'; 
-import NotificationBell from './NotificationBell'; // <-- YENİ EKLENDİ
+import { ShieldAlert } from 'lucide-react'; // Trophy ve Sparkles artık SpBadge içinde, sildim
+import NotificationBell from './NotificationBell';
+import SpBadge from './SpBadge'; // <-- YENİ IMPORT
 
 export default function Navbar() {
   const { user, isSignedIn } = useUser();
@@ -69,14 +70,13 @@ export default function Navbar() {
             </SignedOut>
 
             <SignedIn>
-              {/* PUAN */}
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#00FFFF]/10 border border-[#00FFFF]/30 transition-all ${showRewardAnimation ? 'animate-pulse ring-1 ring-[#00FFFF]' : ''}`}>
-                 {showRewardAnimation && <Sparkles className="w-4 h-4 text-yellow-400 animate-spin" />}
-                 <Trophy className="w-4 h-4 text-[#00FFFF]" />
-                 <span className="text-[#00FFFF] font-black text-sm tracking-widest">{points} SP</span>
+              
+              {/* --- YENİ SP ROZETİ --- */}
+              <div className="mr-4 transform hover:scale-105 transition-transform duration-300">
+                 <SpBadge points={points} showAnimation={showRewardAnimation} />
               </div>
-
-              {/* BİLDİRİM ZİLİ (YENİ) */}
+              
+              {/* BİLDİRİM ZİLİ */}
               <div className="mx-2">
                  <NotificationBell />
               </div>
