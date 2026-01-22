@@ -9,7 +9,7 @@ datasource db {
 
 // 1. KULLANICI TABLOSU
 model User {
-  id        String   @id // Clerk ID
+  id        String    @id // Clerk ID
   email     String?
   username  String?
   firstName String?
@@ -20,12 +20,19 @@ model User {
   currentPoints Int @default(0)
   totalEarned   Int @default(0)
   
-  // ⚡ YENİ EKLENEN: Günlük Ödül (Streak) Sistemi
+  // ⚡ Günlük Ödül (Streak) Sistemi
   streak        Int       @default(0) // Kaç gün üst üste aldı?
   lastClaimDate DateTime?             // En son ne zaman ödül aldı?
 
+  // 🎮 YENİ EKLENEN: Gamer Pasaportu (Profil Bilgileri)
+  bio           String?   @db.Text                 // Kullanıcı biyografisi (Uzun olabilir)
+  mainRole      String    @default("UNSELECTED")   // TOP, JUNGLE, MID, ADC, SUPP
+  favoriteChamp String    @default("None")         // Favori şampiyon adı
+  rankGoal      String    @default("Challenger")   // Hedeflediği lig
+  socialDiscord String?                            // Discord kullanıcı adı
+
   // Durum
-  isBanned      Boolean @default(false)
+  isBanned      Boolean  @default(false)
   lastLoginDate DateTime @default(now())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

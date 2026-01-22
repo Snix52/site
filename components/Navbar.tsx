@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { SnixLogo } from '@/components/Icons'; 
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, User } from 'lucide-react'; // User ikonu eklendi
 import NotificationBell from './NotificationBell';
 import SpBadge from './SpBadge';
 import DailyRewardModal from './DailyRewardModal';
@@ -161,6 +161,15 @@ export default function Navbar() {
                      </div>
                    )}
                 </div>
+
+                {/* 👤 PROFİLİM BUTONU (YENİ) */}
+                <Link 
+                   href="/profil" 
+                   className="flex items-center gap-2 px-3 py-1.5 ml-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all font-bold text-[10px] uppercase tracking-widest"
+                >
+                   <User size={14} />
+                   <span className="hidden lg:inline">Profilim</span>
+                </Link>
                 
                 <div className="mx-1"><NotificationBell /></div>
                 <UserButton appearance={{ elements: { avatarBox: "w-9 h-9 border border-white/10 hover:border-[#00FFFF] transition-all" } }} />
