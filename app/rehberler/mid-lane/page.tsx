@@ -163,21 +163,29 @@ export default function MidLaneGuide() {
                 </div>
 
                 {/* Sekmeler */}
-                <div className="flex justify-center sticky top-4 z-50">
-                    <div className="inline-flex flex-wrap gap-1 bg-[#050A14]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-2xl">
-                        {[
-                            { id: 'overview', label: 'GENEL BAKIŞ', icon: Info },
-                            { id: 'mindset', label: 'ZİHNİYET (MENTAL)', icon: Brain },
-                            { id: 'gameplay', label: 'OYNANIŞ & TEMPO', icon: Timer },
-                            { id: 'champions', label: 'ŞAMPİYONLAR', icon: Shield },
-                        ].map((tab) => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all text-xs font-brand tracking-widest ${activeTab === tab.id ? 'bg-[#00FFFF] text-black shadow-[0_0_15px_rgba(0,255,255,0.4)]' : 'text-gray-500 hover:text-white'}`}>
-                                <tab.icon className="w-4 h-4" />
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+<div className="flex justify-center mb-12 relative z-10"> {/* ⚡ sticky ve top-4 kaldırıldı, mb-12 ile içerikle arasına boşluk verildi */}
+    <div className="inline-flex flex-wrap gap-1 bg-[#050A14]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-2xl">
+        {[
+            { id: 'overview', label: 'GENEL BAKIŞ', icon: Info },
+            { id: 'mindset', label: 'ZİHNİYET (MENTAL)', icon: Brain },
+            { id: 'gameplay', label: 'OYNANIŞ & TEMPO', icon: Timer },
+            { id: 'champions', label: 'ŞAMPİYONLAR', icon: Shield },
+        ].map((tab) => (
+            <button 
+                key={tab.id} 
+                onClick={() => setActiveTab(tab.id)} 
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all text-xs font-brand tracking-widest ${
+                    activeTab === tab.id 
+                    ? 'bg-[#00FFFF] text-black shadow-[0_0_15px_rgba(0,255,255,0.4)]' 
+                    : 'text-gray-500 hover:text-white'
+                }`}
+            >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+            </button>
+        ))}
+    </div>
+</div>
 
                 <div className="mt-12 min-h-[500px]">
                     {/* --- GENEL BAKIŞ --- */}

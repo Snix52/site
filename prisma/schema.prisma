@@ -16,31 +16,36 @@ model User {
   lastName  String?
   imageUrl  String?
 
+  // Puan Sistemi
   currentPoints Int @default(0)
   totalEarned   Int @default(0)
   
-  isBanned      Boolean @default(false)
+  // ⚡ YENİ EKLENEN: Günlük Ödül (Streak) Sistemi
+  streak        Int       @default(0) // Kaç gün üst üste aldı?
+  lastClaimDate DateTime?             // En son ne zaman ödül aldı?
 
+  // Durum
+  isBanned      Boolean @default(false)
   lastLoginDate DateTime @default(now())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // İLİŞKİLER (Hata veren yer burasıydı, şimdi düzeldi)
+  // İLİŞKİLER
   comments      Comment[]
   transactions  PointTransaction[]
-  notifications Notification[] // <-- BU SATIR EKSİKTİ
+  notifications Notification[]
 }
 
 // 2. YORUM TABLOSU
 model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  content    String
+  createdAt  DateTime @default(now())
   
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
 
-  guideId   String
+  guideId    String
   isApproved Boolean @default(false)
 }
 
@@ -48,7 +53,7 @@ model Comment {
 model PointTransaction {
   id          String   @id @default(cuid())
   amount      Int
-  type        String
+  type        String   // Örnek: "DAILY_REWARD", "GUIDE_READ"
   description String?
   
   userId      String
@@ -57,7 +62,7 @@ model PointTransaction {
   createdAt   DateTime @default(now())
 }
 
-// 4. BİLDİRİMLER (YENİ)
+// 4. BİLDİRİMLER
 model Notification {
   id        String   @id @default(cuid())
   title     String   

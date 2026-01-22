@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-// İkonları senin bileşenden çekiyoruz. 
 import { 
   Brain, Timer, Shield, XCircle, CheckCircle, Info, 
   ChevronDown, ChevronUp, AlertOctagon, Target, UserMinus, ArrowLeft, SnixLogo,
-   Zap 
+  Zap 
 } from '@/components/Icons';
 import Link from 'next/link';
-// Yorum bileşenini ekledik
 import CommentSection from '@/components/CommentSection';
 
 // --- YARDIMCI BİLEŞENLER ---
@@ -165,21 +163,26 @@ export default function JungleGuide() {
                 </div>
 
                 {/* Sekmeler */}
-                <div className="flex justify-center sticky top-4 z-50">
-                    <div className="inline-flex flex-wrap gap-1 bg-[#050A14]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-2xl">
-                        {[
-                            { id: 'overview', label: 'GENEL BAKIŞ', icon: Info },
-                            { id: 'mindset', label: 'ZİHNİYET (MENTAL)', icon: Brain },
-                            { id: 'gameplay', label: 'OYNANIŞ & TAKTİK', icon: Timer },
-                            { id: 'champions', label: 'ŞAMPİYONLAR', icon: Shield },
-                        ].map((tab) => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all text-xs font-brand tracking-widest ${activeTab === tab.id ? 'bg-emerald-400 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'text-gray-500 hover:text-white'}`}>
-                                <tab.icon className="w-4 h-4" />
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+{/* ⚡ sticky ve top-4 kaldırıldı, yerine sadece alt tarafa boşluk (mb-8) eklendi */}
+<div className="flex justify-center mb-8 relative z-10">
+    <div className="inline-flex flex-wrap gap-1 bg-[#050A14]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-2xl">
+        {[
+            { id: 'overview', label: 'GENEL BAKIŞ', icon: Info },
+            { id: 'mindset', label: 'ZİHNİYET (MENTAL)', icon: Brain },
+            { id: 'gameplay', label: 'OYNANIŞ & TAKTİK', icon: Timer },
+            { id: 'champions', label: 'ŞAMPİYONLAR', icon: Shield },
+        ].map((tab) => (
+            <button 
+              key={tab.id} 
+              onClick={() => setActiveTab(tab.id)} 
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all text-xs font-brand tracking-widest ${activeTab === tab.id ? 'bg-emerald-400 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'text-gray-500 hover:text-white'}`}
+            >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+            </button>
+        ))}
+    </div>
+</div>
 
                 <div className="mt-12 min-h-[500px]">
                     {/* --- GENEL BAKIŞ --- */}
@@ -295,10 +298,8 @@ export default function JungleGuide() {
                                         <GameplayItem type="dont" title="Yazı Tura (Coinflip) Atma" summary="Tam Kontrol olmadan ejdere girme." detail="Mid laner'ın yokken veya görüşün yokken %50 şansla ejder denemek, Sezon 16'da oyunu kaybettirir. Minyonlar hızlı doğduğu için telafisi yoktur." />
                                         <GameplayItem type="dont" title="Kristal Kulelere Açgözlülük Yapma" summary="Dive atmak çok daha riskli." detail="'Kristal Aşırı Büyüme' ile kuleler artık 3 vuruşta bir patlayan bonus hasar veriyor. Ayrıca Tier 2 ve Tier 3 kulelerinde artık 3 adet plaka var; bu yüzden yan koridorları boş bırakma, split push yapan rakip çok güçlenir." />
                                         
-                                        {/* YENİ EKLENEN 1. HATA */}
                                         <GameplayItem type="dont" title="Karanlığa Rus Ruleti Oynama" summary="Tarayıcı açmadan girme." detail="Yeni görüş noktaları varken tarayıcı açmadan çalıya veya nehre 'yüz kontrolü' (face-check) yapma; önce tarayıcı ile görüşü temizle, sonra ilerle." />
 
-                                        {/* YENİ EKLENEN 2. HATA */}
                                         <GameplayItem type="dont" title="''Bir Dalga Daha'' Tuzağına Düşme" summary="İşin bitti, hemen yok ol." detail="Kuleyi yıktıktan sonra 'bir dalga minyon daha alayım' diye orada bekleme; işin biter bitmez (özellikle kasmış rakipler hayattaysa) anında güvenli bölgeye kaç." />
                                     </div>
                                 </div>
@@ -329,6 +330,7 @@ export default function JungleGuide() {
                         <div className="space-y-6 animate-fade-in">
                             <Card>
                                 <SectionTitle icon={Shield} title="Şampiyon Havuzu: Araçlarını Seç" />
+                                
                                 <ChampionCard 
                                     isRecommended={true} 
                                     title="Gankers (Baskıncılar)" 
@@ -338,7 +340,7 @@ export default function JungleGuide() {
                                 />
                                 <ChampionCard 
                                     isRecommended={true} 
-                                    title="Power Farmers (Güç Çiftçileri)" 
+                                    title="Power Farmers" 
                                     examples="Örnek: Karthus, Graves, Brand" 
                                     logic="Minyon spawn sürelerinin hızlanması ve kampların öneminin artması (Rol görevleri için) bu şampiyonları öne çıkarabilir. Ancak Faelights yüzünden istilaya (invade) uğramaları daha kolaydır, dikkatli olunmalı." 
                                     reason="Yüksek Kaynak, Geç Oyun Garantisi." 

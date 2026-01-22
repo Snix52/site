@@ -9,8 +9,8 @@ export async function POST() {
 
     const userId = user.id;
 
-    // KULLANICIYI BUL VEYA OLUŞTUR (UPSERT)
-    // Buradaki kritik nokta: firstName ve lastName bilgilerini de güncelliyoruz.
+    // 1. KULLANICIYI BUL VEYA OLUŞTUR (UPSERT)
+    // Bu kısım kullanıcının Clerk'teki adı/resmi değişirse veritabanını da günceller.
     const dbUser = await prisma.user.upsert({
       where: { id: userId },
       update: {
@@ -18,6 +18,7 @@ export async function POST() {
         firstName: user.firstName,
         lastName: user.lastName,
         imageUrl: user.imageUrl,
+        email: user.emailAddresses[0]?.emailAddress || "",
       },
       create: {
         id: userId,
@@ -26,50 +27,29 @@ export async function POST() {
         firstName: user.firstName,
         lastName: user.lastName,
         imageUrl: user.imageUrl,
-        currentPoints: 10,
+        currentPoints: 10, // İlk kayıt bonusu (Hoşgeldin)
         totalEarned: 10,
         lastLoginDate: new Date(),
+        streak: 0,
       },
     });
 
-    // BAN KONTROLÜ
+    // 2. BAN KONTROLÜ
     if (dbUser.isBanned) {
       return NextResponse.json({ banned: true, points: 0 });
     }
 
-    // GÜNLÜK ÖDÜL MANTIĞI
-    const now = new Date();
-    const lastLogin = new Date(dbUser.lastLoginDate);
-    const diffHours = Math.abs(now.getTime() - lastLogin.getTime()) / 36e5;
-    const isEligible = diffHours >= 20 || dbUser.totalEarned === 0;
-    
-    let rewardGiven = false;
-
-    if (isEligible) {
-      await prisma.pointTransaction.create({
-        data: {
-          amount: 10,
-          type: dbUser.totalEarned === 0 ? 'WELCOME_BONUS' : 'DAILY_LOGIN',
-          description: dbUser.totalEarned === 0 ? 'Hoşgeldin Bonusu' : 'Günlük Giriş Ödülü',
-          userId: userId,
-        },
-      });
-
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          currentPoints: { increment: 10 },
-          totalEarned: { increment: 10 },
-          lastLoginDate: now
-        }
-      });
-      rewardGiven = true;
-    }
+    // ⚡ ÖNEMLİ DEĞİŞİKLİK:
+    // Artık burada "Otomatik Günlük Ödül" vermiyoruz. 
+    // Onu kullanıcı butona basarak /api/user/claim üzerinden alacak.
+    // Burası sadece Frontend'e "Durum Raporu" verir.
 
     return NextResponse.json({ 
       success: true, 
-      rewardGiven,
-      points: dbUser.currentPoints + (rewardGiven ? 10 : 0)
+      points: dbUser.currentPoints,
+      streak: dbUser.streak,           // <--- F5 atınca sayacın bozulmaması için ŞART
+      lastClaimDate: dbUser.lastClaimDate, // <--- Butonun kilitli kalması için ŞART
+      isBanned: dbUser.isBanned
     });
 
   } catch (error) {
