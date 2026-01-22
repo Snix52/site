@@ -7,6 +7,9 @@ import {
   Trophy, Hash, Gamepad2, Map, Loader2
 } from 'lucide-react';
 
+// 🛠️ DİKKAT: Hem bileşeni hem de FRAMES listesini çağırıyoruz
+import AvatarFrame, { FRAMES } from './AvatarFrame'; 
+
 interface UserData {
   id: string;
   username: string | null;
@@ -18,6 +21,7 @@ interface UserData {
   favoriteChamp: string;
   rankGoal: string;
   socialDiscord: string | null;
+  selectedFrame?: string;
   createdAt: Date;
 }
 
@@ -38,6 +42,7 @@ export default function ProfileClient({ user }: { user: UserData }) {
     favoriteChamp: user.favoriteChamp === "None" ? "Ahri" : user.favoriteChamp,
     rankGoal: user.rankGoal || "Challenger",
     socialDiscord: user.socialDiscord || "",
+    selectedFrame: user.selectedFrame || "BASIC",
   });
 
   useEffect(() => {
@@ -86,25 +91,16 @@ export default function ProfileClient({ user }: { user: UserData }) {
     }
   };
 
-  // 🔥 Navbar Stili (Aynısı)
+  // 🔥 Navbar Stili
   const GLASS_STYLE = "bg-black/30 border border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.2)] rounded-2xl";
 
   return (
     <div className="min-h-screen bg-[#050A14] text-white pb-20 relative font-sans">
       
-      {/* 🔥 DÜZELTİLEN ARKA PLAN 🔥
-          - fixed: Sayfa kaydırılsa bile resim sabit kalır (Parallax etkisi).
-          - inset-0: Dört bir yana yapışır.
-          - z-0: En arkada durur.
-          - object-cover: Resmi bozmadan ekranı doldurur.
-      */}
+      {/* 🔥 ARKA PLAN (Full Ekran & Sinematik) */}
       <div className="fixed inset-0 w-full h-full z-0">
-        {/* Karartma Katmanı (Resmin üstüne hafif siyah atıyoruz ki yazılar okunsun) */}
         <div className="absolute inset-0 bg-black/40 z-10"></div>
-        
-        {/* Alt taraftan yumuşak geçiş (Gradient) */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#050A14] via-transparent to-transparent z-20"></div>
-
         <img 
           src={getSplashArt(formData.favoriteChamp)} 
           alt="Background" 
@@ -112,23 +108,18 @@ export default function ProfileClient({ user }: { user: UserData }) {
         />
       </div>
 
-      {/* İçerik Kutusu (Resmin üzerinde duracak) */}
+      {/* İçerik Kutusu */}
       <div className="max-w-6xl mx-auto px-4 relative z-30 pt-40">
         
         {/* --- ÜST KART --- */}
         <div className={`${GLASS_STYLE} p-8 mb-8 flex flex-col md:flex-row items-center gap-8`}>
           
-          {/* Avatar */}
-          <div className="relative group shrink-0">
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full blur opacity-20 group-hover:opacity-50 transition duration-500"></div>
-            <img 
-              src={user.imageUrl || "https://github.com/shadcn.png"} 
-              alt="Avatar" 
-              className="relative w-36 h-36 rounded-full border-4 border-black/50 object-cover"
-            />
-            <div className="absolute bottom-1 right-1 bg-black/80 p-2 rounded-full border border-white/10 text-emerald-400">
-               <Shield className="w-6 h-6" />
-            </div>
+          {/* 🛠️ Avatar Frame Bileşeni */}
+          <div className="relative group shrink-0 mx-auto md:mx-0">
+             <AvatarFrame 
+                src={user.imageUrl || "https://github.com/shadcn.png"} 
+                frameType={formData.selectedFrame} 
+             />
           </div>
 
           {/* İsim & Rol */}
@@ -216,6 +207,27 @@ export default function ProfileClient({ user }: { user: UserData }) {
                                     onChange={(e) => setFormData({...formData, socialDiscord: e.target.value})}
                                     className="w-full bg-black/60 border border-white/10 rounded-xl p-3 text-white focus:border-emerald-500 outline-none placeholder-white/20"
                                 />
+                            </div>
+
+                            {/* 🛠️ OTOMATİK ÇERÇEVE SEÇİCİ */}
+                            <div className="col-span-1 md:col-span-2 space-y-3 border-t border-white/10 pt-4 mt-2">
+                                <label className="text-xs text-gray-400 uppercase font-bold pl-1">Çerçeve Seç (Test)</label>
+                                <div className="flex flex-wrap gap-4">
+                                    {/* 🔥 ARTIK LİSTE YAZMAK YOK! FRAMES nesnesinin anahtarlarını otomatik alıyor */}
+                                    {Object.keys(FRAMES).map((frame) => (
+                                        <button
+                                            key={frame}
+                                            onClick={() => setFormData({...formData, selectedFrame: frame})}
+                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                                                formData.selectedFrame === frame 
+                                                ? "bg-white text-black scale-105 shadow-[0_0_15px_rgba(255,255,255,0.3)]" 
+                                                : "bg-black/40 text-gray-400 border border-white/10 hover:bg-white/10"
+                                            }`}
+                                        >
+                                            {frame}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                             
                             <div className="col-span-1 md:col-span-2 space-y-2">
