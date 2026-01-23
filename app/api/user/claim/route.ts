@@ -11,88 +11,106 @@ export async function POST() {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // 1. Kullanıcıyı Bul
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    // 🛡️ TRANSACTION BAŞLATIYORUZ
+    // Okuma ve Yazma işlemlerini tek bir paket yapıyoruz.
+    const result = await prisma.$transaction(async (tx) => {
+        
+        // 1. Kullanıcıyı Transaction İçinde Bul (Kilitli veri)
+        const dbUser = await tx.user.findUnique({
+            where: { id: userId },
+        });
 
-    if (!dbUser) {
-        return new NextResponse("User not found", { status: 404 });
-    }
-
-    // 2. TARİH MANTIĞI (KURŞUN GEÇİRMEZ VERSİYON)
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Saat 00:00:00
-    
-    let lastClaimDateOnly = null;
-    if (dbUser.lastClaimDate) {
-        const d = new Date(dbUser.lastClaimDate);
-        lastClaimDateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate()); // Saat 00:00:00
-    }
-
-    // Bugün almış mı? (Milisaniye karşılaştırması)
-    if (lastClaimDateOnly && lastClaimDateOnly.getTime() === today.getTime()) {
-        return NextResponse.json({ 
-            success: false, 
-            message: "Already claimed today",
-            points: dbUser.currentPoints,
-            streak: dbUser.streak,
-            lastClaimDate: dbUser.lastClaimDate
-        }, { status: 400 });
-    }
-
-    // 3. Streak Hesaplama
-    let newStreak = 1;
-    
-    if (lastClaimDateOnly) {
-        // İki tarih arasındaki gün farkını bul
-        const diffTime = Math.abs(today.getTime() - lastClaimDateOnly.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-
-        // Eğer fark 1 gün ise seriyi artır (Dün almış demektir)
-        if (diffDays === 1) {
-            newStreak = (dbUser.streak || 0) + 1;
-        } else {
-            // Fark 1 günden fazlaysa seri 1'e düşer (Zincir koptu)
-            newStreak = 1; 
+        if (!dbUser) {
+            throw new Error("User not found");
         }
-    } else {
-        // Hiç almamışsa 1
-        newStreak = 1;
-    }
 
-    // 4. Ödül Miktarı
-    // Eğer seri 7'yi geçerse başa mı dönsün yoksa 7'den mi devam etsin?
-    // Genelde 7'den sonra 1'e döner (Haftalık Döngü)
-    const normalizedStreak = newStreak > 7 ? 1 : newStreak;
-    const rewardAmount = normalizedStreak === 7 ? 150 : normalizedStreak * 10;
+        // 2. TARİH MANTIĞI (Senin yazdığın efsane mantık)
+        const now = new Date();
+        // UTC Sorununu çözmek için basit bir trick:
+        // Eğer sunucu UTC ise ve TR saati istiyorsan buraya offset ekleyebiliriz.
+        // Ama şimdilik sunucu saatiyle devam edelim, global standarttır.
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); 
 
-    // 5. Güncelleme
-    const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: {
-            currentPoints: { increment: rewardAmount },
-            totalEarned: { increment: rewardAmount },
-            streak: normalizedStreak,
-            lastClaimDate: new Date(), // Tam şu anın tarihi
-            notifications: {
-                create: {
-                    title: `Gün ${normalizedStreak} Tamamlandı!`,
-                    message: `Lojistik destek ulaştı: +${rewardAmount} SP hesabına eklendi.`,
-                    type: "GIFT"
-                }
+        let lastClaimDateOnly = null;
+        if (dbUser.lastClaimDate) {
+            const d = new Date(dbUser.lastClaimDate);
+            lastClaimDateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        }
+
+        // Bugün almış mı?
+        if (lastClaimDateOnly && lastClaimDateOnly.getTime() === today.getTime()) {
+            // Hata fırlatarak transaction'ı iptal ediyoruz, catch bloğu yakalayacak
+            throw new Error("ALREADY_CLAIMED");
+        }
+
+        // 3. Streak Hesaplama
+        let newStreak = 1;
+
+        if (lastClaimDateOnly) {
+            const diffTime = Math.abs(today.getTime() - lastClaimDateOnly.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+            if (diffDays === 1) {
+                newStreak = (dbUser.streak || 0) + 1;
+            } else {
+                newStreak = 1; // Zincir koptu
             }
         }
+
+        // 4. Ödül Döngüsü (Haftalık Reset)
+        const normalizedStreak = newStreak > 7 ? 1 : newStreak;
+        // 7. Gün Bonusu: 150 SP, Normal günler: 10 * Gün
+        const rewardAmount = normalizedStreak === 7 ? 150 : normalizedStreak * 10;
+
+        // 5. Güncelleme (Atomik)
+        const updatedUser = await tx.user.update({
+            where: { id: userId },
+            data: {
+                currentPoints: { increment: rewardAmount },
+                totalEarned: { increment: rewardAmount },
+                streak: normalizedStreak,
+                lastClaimDate: now, // Tam şu an (Saatli)
+                
+                // Bildirimi de aynı anda oluşturuyoruz
+                notifications: {
+                    create: {
+                        title: `Gün ${normalizedStreak} Tamamlandı!`,
+                        message: `Lojistik destek ulaştı: +${rewardAmount} SP hesabına eklendi.`,
+                        type: "GIFT"
+                    }
+                },
+                
+                // Opsiyonel: Log tutmak istersen Transaction geçmişi
+                transactions: {
+                    create: {
+                        amount: rewardAmount,
+                        type: "DAILY_REWARD",
+                        description: `Günlük Ödül (Streak: ${normalizedStreak})`
+                    }
+                }
+            }
+        });
+
+        return { 
+            success: true, 
+            points: updatedUser.currentPoints, 
+            streak: updatedUser.streak,
+            lastClaimDate: updatedUser.lastClaimDate,
+            rewardAmount // Client'a göstermek için geri döndük
+        };
     });
 
-    return NextResponse.json({ 
-        success: true, 
-        points: updatedUser.currentPoints, 
-        streak: updatedUser.streak,
-        lastClaimDate: updatedUser.lastClaimDate 
-    });
+    return NextResponse.json(result);
 
-  } catch (error) {
+  } catch (error: any) {
+    // Özel hata kontrolü
+    if (error.message === "ALREADY_CLAIMED") {
+         return NextResponse.json({ 
+            success: false, 
+            message: "Bugünkü ödülü zaten aldın yarın gel!",
+         }, { status: 400 });
+    }
+    
     console.log("[DAILY_CLAIM_ERROR]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
