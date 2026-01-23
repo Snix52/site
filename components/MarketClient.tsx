@@ -4,18 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, Check, Loader2, ShoppingBag } from 'lucide-react';
 import AvatarFrame, { FRAMES } from './AvatarFrame'; 
-
-const PRICES: Record<string, number> = {
-  BASIC: 0,
-  IONIA: 1500,
-  HEXTECH: 2000,
-  DARKIN: 3500,
-  SHADOW: 3500,
-  VOID: 4000,
-  FRELJORD: 4000,
-  CHALLENGER: 10000,
-  SHURIMA: 15000
-};
+import { MARKET_PRICES } from '@/lib/market'; // 👈 MERKEZİ FİYATLAR
 
 interface UserData {
   id: string;
@@ -51,6 +40,7 @@ export default function MarketClient({ user }: { user: UserData }) {
       setCurrentPoints(data.newPoints);
       setOwnedFrames(data.ownedFrames);
       
+      // Kullanıcı bakiyesi güncellendiğinde diğer bileşenleri uyar
       window.dispatchEvent(new Event('user_updated'));
 
       router.refresh();
@@ -67,7 +57,6 @@ export default function MarketClient({ user }: { user: UserData }) {
       {/* BAŞLIK */}
       <div className="max-w-6xl mx-auto mb-12 flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
         <div>
-            {/* 🛠️ ".GG" KALDIRILDI */}
             <h1 className="text-5xl font-black italic tracking-tighter text-white flex items-center gap-3 drop-shadow-[0_0_15px_rgba(0,255,255,0.5)]">
                 <ShoppingBag className="w-10 h-10 text-[#00FFFF]" /> 
                 MARKET
@@ -77,7 +66,7 @@ export default function MarketClient({ user }: { user: UserData }) {
             </p>
         </div>
 
-        {/* 💎 BAKİYE KUTUSU (Animasyonlu SP Rozeti) */}
+        {/* 💎 BAKİYE KUTUSU */}
         <div className="bg-[#00FFFF]/5 border border-[#00FFFF]/20 px-8 py-4 rounded-2xl flex items-center gap-6 shadow-[0_0_30px_rgba(0,255,255,0.1)] backdrop-blur-md group hover:border-[#00FFFF]/40 transition-all">
             
             {/* ✨ ANIMASYONLU 3D LOGO */}
@@ -134,7 +123,8 @@ export default function MarketClient({ user }: { user: UserData }) {
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
         {Object.keys(FRAMES).map((frame) => {
             const isOwned = ownedFrames.includes(frame);
-            const price = PRICES[frame] || 0;
+            // 🛠️ FİYAT ARTIK IMPORT EDİLEN DOSYADAN GELİYOR
+            const price = MARKET_PRICES[frame] || 0; 
             const canAfford = currentPoints >= price;
 
             return (

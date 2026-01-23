@@ -1,18 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server"; // 🛡️ GÜVENLİK KATMANI
-
-const PRICES: Record<string, number> = {
-  BASIC: 0,
-  IONIA: 1500,
-  HEXTECH: 2000,
-  DARKIN: 3500,
-  SHADOW: 3500,
-  VOID: 4000,
-  FRELJORD: 4000,
-  CHALLENGER: 10000,
-  SHURIMA: 15000
-};
+import { MARKET_PRICES } from "@/lib/market"; // 👈 MERKEZİ FİYATLAR
 
 export async function POST(req: Request) {
   try {
@@ -45,8 +34,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Buna zaten sahipsin!" }, { status: 400 });
     }
 
-    // 4. Fiyat kontrolü
-    const price = PRICES[frameId];
+    // 4. Fiyat kontrolü (Merkezi Dosyadan)
+    const price = MARKET_PRICES[frameId];
+    
+    // Eğer olmayan bir ürün ID'si gönderilirse (örn: Postman ile)
     if (price === undefined) {
       return NextResponse.json({ error: "Geçersiz ürün." }, { status: 400 });
     }
@@ -70,12 +61,20 @@ export async function POST(req: Request) {
             where: { id: realUserId },
             data: {
                 currentPoints: { decrement: price },
-                ownedFrames: { push: frameId }
+                ownedFrames: { push: frameId },
+                // İsteğe bağlı: Transaction geçmişine ekle
+                transactions: {
+                    create: {
+                        amount: -price,
+                        type: "MARKET_PURCHASE",
+                        description: `${frameId} Çerçeve Alımı`
+                    }
+                }
             }
         });
     });
 
-    console.log(`✅ Güvenli İşlem: ${user.username} -> ${frameId} aldı.`);
+    console.log(`✅ Güvenli İşlem: ${user.username} -> ${frameId} (${price} SP) aldı.`);
 
     return NextResponse.json({ 
       success: true, 
