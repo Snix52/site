@@ -3,39 +3,37 @@ import React from 'react';
 interface AvatarFrameProps {
   src: string;
   frameType: string;
+  className?: string; // 👈 YENİ: Dışarıdan boyut alabiliyor
 }
 
-// ⬇️ ARTIK HEPSİ LOCAL DOSYA! (Linkler gitti)
+// ⬇️ LOCAL DOSYALAR
 export const FRAMES: Record<string, string> = {
   DARKIN: "/frames/darkin.png",
   IONIA: "/frames/ionia.png",
   HEXTECH: "/frames/hextech.png",
-  // 🛠️ Basic ve Challenger artık senin dosyalarından okunuyor
   BASIC: "/frames/basic.png",
   CHALLENGER: "/frames/challenger.png",
-  
   SHADOW: "/frames/shadow.png",
   VOID: "/frames/void.png",
   FRELJORD: "/frames/freljord.png"
 };
 
 // ----------------------------------------------------------------------
-// 🛠️ KRAL, BEDEN AYARLARI (Senin Ayarların Korundu ✅)
-// Not: Yeni Basic ve Challenger png'leri için buradaki %63 ile oynayabilirsin.
+// 🛠️ BEDEN AYARLARI (Yüzdelik olduğu için her boyutta çalışır)
 // ----------------------------------------------------------------------
 const FRAME_SIZES: Record<string, string> = {
   DARKIN: "70%",
   IONIA: "76%",
   HEXTECH: "77%",
-  BASIC: "80%",      // Yeni PNG'ye göre bunu değiştirmen gerekebilir
-  CHALLENGER: "71%", // Yeni PNG'ye göre bunu değiştirmen gerekebilir
+  BASIC: "80%",      
+  CHALLENGER: "71%", 
   SHADOW: "68%",
   VOID: "69%",
   FRELJORD: "74%"
 };
 // ----------------------------------------------------------------------
 
-export default function AvatarFrame({ src, frameType }: AvatarFrameProps) {
+export default function AvatarFrame({ src, frameType, className = "w-44 h-44" }: AvatarFrameProps) {
   const frameUrl = FRAMES[frameType] || FRAMES["BASIC"];
   const currentSize = FRAME_SIZES[frameType] || "63%";
 
@@ -46,57 +44,67 @@ export default function AvatarFrame({ src, frameType }: AvatarFrameProps) {
       case "HEXTECH": return "animate-hextech";
       case "SHADOW": return "animate-shadow";
       case "VOID": return "animate-void";
+      case "CHALLENGER": return "animate-challenger";
       case "FRELJORD": return ""; 
       default: return "";
     }
   };
 
   return (
-    <div className="relative w-44 h-44 flex items-center justify-center shrink-0">
+    // ⬇️ DÜZELTME: className dışarıdan geliyor, varsayılanı w-44 h-44
+    <div className={`relative flex items-center justify-center shrink-0 ${className}`}>
       
-      {/* 💥 KATMAN 0: ARKA PLAN EFEKTLERİ (AURA) */}
+      {/* 💥 KATMAN 0: ARKA PLAN EFEKTLERİ (AURA) - ARTIK YÜZDELİK! */}
       <div className="absolute inset-0 flex items-center justify-center z-[-1]">
         
         {/* DARKIN */}
         {frameType === "DARKIN" && (
           <>
-            <div className="absolute w-36 h-36 bg-red-600/40 rounded-full blur-2xl animate-pulse"></div>
-            <div className="absolute w-28 h-28 bg-red-900/60 rounded-full blur-xl animate-ping" style={{ animationDuration: '3s' }}></div>
+            <div className="absolute w-[80%] h-[80%] bg-red-600/40 rounded-full blur-2xl animate-pulse"></div>
+            <div className="absolute w-[60%] h-[60%] bg-red-900/60 rounded-full blur-xl animate-ping" style={{ animationDuration: '3s' }}></div>
           </>
         )}
 
         {/* IONIA */}
         {frameType === "IONIA" && (
           <>
-            <div className="absolute w-36 h-36 bg-cyan-400/30 rounded-full blur-2xl animate-pulse"></div>
-            <div className="absolute w-32 h-32 bg-pink-500/30 rounded-full blur-3xl animate-[pulse_4s_infinite_1s]"></div>
+            <div className="absolute w-[80%] h-[80%] bg-cyan-400/30 rounded-full blur-2xl animate-pulse"></div>
+            <div className="absolute w-[70%] h-[70%] bg-pink-500/30 rounded-full blur-3xl animate-[pulse_4s_infinite_1s]"></div>
           </>
         )}
 
         {/* HEXTECH */}
         {frameType === "HEXTECH" && (
           <>
-            <div className="absolute w-36 h-36 bg-blue-600/40 rounded-full blur-2xl shadow-[0_0_50px_rgba(37,99,235,0.6)]"></div>
-            <div className="absolute w-28 h-28 border-2 border-blue-400/50 rounded-full animate-[ping_2s_linear_infinite]"></div>
+            <div className="absolute w-[80%] h-[80%] bg-blue-600/40 rounded-full blur-2xl shadow-[0_0_50px_rgba(37,99,235,0.6)]"></div>
+            <div className="absolute w-[60%] h-[60%] border-2 border-blue-400/50 rounded-full animate-[ping_2s_linear_infinite]"></div>
           </>
         )}
 
         {/* SHADOW */}
         {frameType === "SHADOW" && (
             <>
-                <div className="w-36 h-36 bg-emerald-500/30 rounded-full blur-2xl animate-pulse"></div>
+                <div className="w-[80%] h-[80%] bg-emerald-500/30 rounded-full blur-2xl animate-pulse"></div>
                 <div className="absolute w-full h-full bg-teal-900/20 blur-xl animate-[spin_10s_linear_infinite]"></div>
             </>
         )}
 
         {/* VOID */}
         {frameType === "VOID" && (
-            <div className="w-36 h-36 bg-purple-700/50 rounded-full blur-2xl animate-[pulse_2s_infinite]"></div>
+            <div className="w-[80%] h-[80%] bg-purple-700/50 rounded-full blur-2xl animate-[pulse_2s_infinite]"></div>
+        )}
+
+        {/* 🏆 CHALLENGER */}
+        {frameType === "CHALLENGER" && (
+            <>
+                <div className="absolute w-[80%] h-[80%] bg-blue-600/50 rounded-full blur-2xl animate-pulse"></div>
+                <div className="absolute w-[90%] h-[90%] bg-yellow-400/20 rounded-full blur-3xl animate-[spin_6s_linear_infinite]"></div>
+            </>
         )}
 
         {/* FRELJORD */}
         {frameType === "FRELJORD" && (
-            <div className="w-36 h-36 bg-cyan-500/10 rounded-full blur-xl"></div>
+            <div className="w-[80%] h-[80%] bg-cyan-500/10 rounded-full blur-xl"></div>
         )}
       </div>
 
@@ -106,7 +114,7 @@ export default function AvatarFrame({ src, frameType }: AvatarFrameProps) {
         
         {/* Profil Resmi */}
         <div 
-          className="absolute rounded-full overflow-hidden z-0 border-2 border-black/50 shadow-inner transition-all duration-300"
+          className="absolute rounded-full overflow-hidden z-0 border border-black/50 shadow-inner transition-all duration-300"
           style={{ width: currentSize, height: currentSize }}
         >
           <img src={src} alt="Avatar" className="w-full h-full object-cover" />
@@ -127,6 +135,7 @@ export default function AvatarFrame({ src, frameType }: AvatarFrameProps) {
          {frameType === "DARKIN" && <div className="absolute inset-0 bg-red-500/10 mix-blend-overlay animate-pulse"></div>}
          {frameType === "SHADOW" && <div className="absolute inset-0 bg-emerald-900/20 mix-blend-overlay animate-pulse"></div>}
          {frameType === "VOID" && <div className="absolute inset-0 bg-fuchsia-900/20 mix-blend-overlay animate-pulse"></div>}
+         {frameType === "CHALLENGER" && <div className="absolute inset-0 bg-cyan-300/10 mix-blend-overlay animate-pulse"></div>}
       </div>
 
 
@@ -165,6 +174,13 @@ export default function AvatarFrame({ src, frameType }: AvatarFrameProps) {
         @keyframes voidPulse {
             0%, 100% { transform: scale(1); filter: hue-rotate(0deg); }
             50% { transform: scale(1.04); filter: hue-rotate(20deg) brightness(1.1); }
+        }
+
+        /* 🏆 Challenger Animation */
+        .animate-challenger { animation: challengerGlow 3s ease-in-out infinite; }
+        @keyframes challengerGlow {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(37,99,235,0.6)); }
+            50% { transform: scale(1.02); filter: drop-shadow(0 0 20px rgba(6,182,212,0.9)) brightness(1.2); }
         }
       `}</style>
     </div>

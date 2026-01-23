@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { SnixLogo } from '@/components/Icons'; 
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
-import { ShieldAlert, User } from 'lucide-react'; // User ikonu eklendi
+import { ShieldAlert, User, ShoppingBag } from 'lucide-react'; 
 import NotificationBell from './NotificationBell';
 import SpBadge from './SpBadge';
 import DailyRewardModal from './DailyRewardModal';
@@ -16,10 +16,8 @@ export default function Navbar() {
   
   // Günlük Ödül State'leri
   const [isDailyModalOpen, setIsDailyModalOpen] = useState(false);
-  const [streak, setStreak] = useState(0); // Başlangıç 0
+  const [streak, setStreak] = useState(0); 
   const [lastClaim, setLastClaim] = useState<string | null>(null);
-
-  const hasSynced = useRef(false);
 
   const ADMIN_ID = "user_38IQNX84WzWPGgn1wdzcOWogLaN";
   const isAdmin = user?.id === ADMIN_ID;
@@ -30,52 +28,59 @@ export default function Navbar() {
     return new Date(dateString).toDateString();
   };
 
-  // ⚡ BİLDİRİM MANTIĞI: Bugünün tarihiyle son alınan tarih aynı değilse ödül vardır.
   const today = new Date().toDateString();
   const isRewardAvailable = lastClaim !== today;
 
-  // 1. VERİTABANI SENKRONİZASYONU
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn || hasSynced.current) return;
-
-    const syncUser = async () => {
-      try {
-        hasSynced.current = true;
-        const res = await fetch('/api/user/sync', { method: 'POST' });
-        const data = await res.json();
-        
-        if (data.points !== undefined) setPoints(data.points);
-        if (data.rewardGiven) {
-          setShowRewardAnimation(true);
-          setTimeout(() => setShowRewardAnimation(false), 5000);
-        }
-        
-        if (data.streak !== undefined) setStreak(data.streak);
-        if (data.lastClaimDate) setLastClaim(normalizeDate(data.lastClaimDate));
-        
-      } catch (err) {
-        console.error("Puan servisi hatası:", err);
-        hasSynced.current = false;
+  // 🔄 VERİ GÜNCELLEME FONKSİYONU (Dışarıdan çağrılabilir hale getirdik)
+  const syncUser = async () => {
+    if (!isSignedIn) return;
+    try {
+      const res = await fetch('/api/user/sync', { method: 'POST' });
+      const data = await res.json();
+      
+      if (data.points !== undefined) setPoints(data.points);
+      if (data.rewardGiven) {
+        setShowRewardAnimation(true);
+        setTimeout(() => setShowRewardAnimation(false), 5000);
       }
+      if (data.streak !== undefined) setStreak(data.streak);
+      if (data.lastClaimDate) setLastClaim(normalizeDate(data.lastClaimDate));
+    } catch (err) {
+      console.error("Puan servisi hatası:", err);
+    }
+  };
+
+  // 1. VERİTABANI SENKRONİZASYONU VE TELSİZ SİSTEMİ 📻
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+
+    // İlk açılışta veriyi çek
+    syncUser();
+
+    // 👂 Sinyal Dinleyici: "user_updated" olayını bekle
+    const handleUpdateSignal = () => {
+        console.log("📻 Navbar: Güncelleme sinyali alındı!");
+        syncUser();
     };
 
-    syncUser();
+    window.addEventListener('user_updated', handleUpdateSignal);
+
+    // Temizlik (Component kapanırsa dinlemeyi bırak)
+    return () => {
+        window.removeEventListener('user_updated', handleUpdateSignal);
+    };
   }, [isSignedIn, isLoaded]);
 
   // 2. ÖDÜL ALMA FONKSİYONU
   const handleDailyClaim = async () => {
     try {
-      // Optimistic UI: Butonu hemen kilitle
-      setLastClaim(today); // Tarihi bugün yapınca bildirim anında kaybolacak
-
+      setLastClaim(today); 
       const res = await fetch('/api/user/claim', { method: 'POST' });
       
       if (!res.ok) {
         const errorText = await res.text();
-        if (res.status === 400 && errorText.includes("Already claimed")) {
-            return; 
-        }
-        setLastClaim(null); // Hata varsa geri al
+        if (res.status === 400 && errorText.includes("Already claimed")) return; 
+        setLastClaim(null); 
         return;
       }
 
@@ -85,9 +90,11 @@ export default function Navbar() {
         setPoints(data.points);
         setStreak(data.streak);
         setLastClaim(normalizeDate(data.lastClaimDate));
-        
         setShowRewardAnimation(true);
         setTimeout(() => setShowRewardAnimation(false), 5000);
+        
+        // 📢 Kendimiz de sinyal yayalım (Belki başka componentler dinliyordur)
+        window.dispatchEvent(new Event('user_updated'));
       }
     } catch (error) {
       console.error("Bağlantı hatası:", error);
@@ -101,7 +108,6 @@ export default function Navbar() {
                   bg-black/30 border-b border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.2)] 
                   transition-all duration-300 overflow-visible">
           
-          {/* LOGO ALANI */}
           <div className="flex items-center overflow-visible group">
              <Link href="/" className="relative flex items-center gap-2 overflow-visible">
               <div className="relative flex items-center justify-center w-16 h-16 -ml-4 overflow-visible">
@@ -114,7 +120,6 @@ export default function Navbar() {
              </Link>
           </div>
           
-          {/* MENÜ LİNKLERİ */}
           <div className="hidden md:flex items-center gap-10">
             <Link href="/" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Ana Sayfa</Link>
             <Link href="/hakkimizda" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Hakkımızda</Link>
@@ -139,22 +144,18 @@ export default function Navbar() {
               </SignedOut>
 
               <SignedIn>
-                {/* ⚡ SP BADGE + BİLDİRİM ALANI */}
                 <div 
                   className="relative transform hover:scale-105 transition-transform duration-300 cursor-pointer active:scale-95 group"
                   onClick={() => setIsDailyModalOpen(true)}
                 >
                    <SpBadge points={points} showAnimation={showRewardAnimation} />
                    
-                   {/* 🎁 ÖDÜL VARSA GÖZÜKECEK KISIM */}
                    {isRewardAvailable && (
                      <div className="absolute -bottom-2 left-1/2 -translate-x-2/3 flex items-center gap-1 animate-bounce">
-                        {/* Yanıp sönen nokta */}
                         <span className="relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00FFFF] opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00FFFF]"></span>
                         </span>
-                        {/* Yazı */}
                         <span className="text-[9px] font-black text-[#00FFFF] tracking-widest whitespace-nowrap drop-shadow-[0_0_5px_rgba(0,0,0,1)]">
                             GÜNLÜK ÖDÜL !
                         </span>
@@ -162,7 +163,14 @@ export default function Navbar() {
                    )}
                 </div>
 
-                {/* 👤 PROFİLİM BUTONU (YENİ) */}
+                <Link 
+                   href="/market" 
+                   className="flex items-center gap-2 px-3 py-1.5 ml-2 rounded bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20 hover:text-yellow-300 transition-all font-bold text-[10px] uppercase tracking-widest group"
+                >
+                   <ShoppingBag size={14} className="group-hover:animate-bounce" />
+                   <span className="hidden lg:inline">Market</span>
+                </Link>
+
                 <Link 
                    href="/profil" 
                    className="flex items-center gap-2 px-3 py-1.5 ml-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all font-bold text-[10px] uppercase tracking-widest"

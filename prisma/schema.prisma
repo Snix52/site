@@ -19,17 +19,21 @@ model User {
   // Puan Sistemi
   currentPoints Int @default(0)
   totalEarned   Int @default(0)
-  
+   
   // ⚡ Günlük Ödül (Streak) Sistemi
   streak        Int       @default(0) // Kaç gün üst üste aldı?
   lastClaimDate DateTime?             // En son ne zaman ödül aldı?
 
-  // 🎮 YENİ EKLENEN: Gamer Pasaportu (Profil Bilgileri)
-  bio           String?   @db.Text                 // Kullanıcı biyografisi (Uzun olabilir)
-  mainRole      String    @default("UNSELECTED")   // TOP, JUNGLE, MID, ADC, SUPP
-  favoriteChamp String    @default("None")         // Favori şampiyon adı
-  rankGoal      String    @default("Challenger")   // Hedeflediği lig
-  socialDiscord String?                            // Discord kullanıcı adı
+  // 🎮 Gamer Pasaportu (Profil Bilgileri)
+  bio           String?   @db.Text                   // Kullanıcı biyografisi
+  mainRole      String    @default("UNSELECTED")     // TOP, JUNGLE, MID, ADC, SUPP
+  favoriteChamp String    @default("None")           // Favori şampiyon
+  rankGoal      String    @default("Challenger")     // Hedef lig
+  socialDiscord String?                              // Discord adı
+
+  // 🛍️ YENİ EKLENEN: Market ve Envanter Sistemi
+  selectedFrame String    @default("BASIC")          // Şu an takılı olan çerçeve
+  ownedFrames   String[]  @default(["BASIC"])        // Satın aldığı çerçeveler listesi (Array)
 
   // Durum
   isBanned      Boolean  @default(false)
@@ -45,14 +49,14 @@ model User {
 
 // 2. YORUM TABLOSU
 model Comment {
-  id         String   @id @default(cuid())
-  content    String
-  createdAt  DateTime @default(now())
-  
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+   
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
 
-  guideId    String
+  guideId   String
   isApproved Boolean @default(false)
 }
 
@@ -60,12 +64,12 @@ model Comment {
 model PointTransaction {
   id          String   @id @default(cuid())
   amount      Int
-  type        String   // Örnek: "DAILY_REWARD", "GUIDE_READ"
+  type        String   // Örnek: "DAILY_REWARD", "GUIDE_READ", "MARKET_PURCHASE"
   description String?
-  
+   
   userId      String
   user        User     @relation(fields: [userId], references: [id])
-  
+   
   createdAt   DateTime @default(now())
 }
 
@@ -76,9 +80,9 @@ model Notification {
   message   String   
   type      String   @default("INFO") // INFO, SUCCESS, WARNING, GIFT
   isRead    Boolean  @default(false)
-  
+   
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  
+   
   createdAt DateTime @default(now())
 }
