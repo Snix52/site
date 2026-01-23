@@ -1,17 +1,22 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { CheckCircle, Users, MessageSquare, Trash2, Ban, ShieldCheck, Save, Send, BellRing, Megaphone } from "lucide-react";
+import { CheckCircle, Users, Trash2, Ban, Save, Send, BellRing, Megaphone, ShieldCheck } from "lucide-react"; // 👈 BURASI DÜZELDİ
 import Image from "next/image";
+
+// 👑 ADMİN ID (Sabit)
+const ADMIN_ID = "user_38IQNX84WzWPGgn1wdzcOWogLaN"; 
 
 export default async function AdminDashboard() {
   const user = await currentUser();
-  const ADMIN_ID = "user_38IQNX84WzWPGgn1wdzcOWogLaN"; // Senin ID'n
 
+  // 🛡️ 1. SAYFA GÜVENLİĞİ (Görsel Koruma)
   if (!user || user.id !== ADMIN_ID) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-red-500 font-bold text-2xl">
-        ⛔ YETKİSİZ GİRİŞ
+      <div className="min-h-screen flex items-center justify-center bg-black text-red-500 font-bold text-2xl flex-col gap-4">
+        <Ban size={64} />
+        <p>⛔ YETKİSİZ GİRİŞ</p>
+        <p className="text-sm text-gray-500 font-mono">IP Adresiniz Loglandı.</p>
       </div>
     );
   }
@@ -28,40 +33,47 @@ export default async function AdminDashboard() {
     orderBy: { createdAt: 'desc' }
   });
 
-  // --- SERVER ACTIONS (İŞLEMLER) ---
+  // --- SERVER ACTIONS (GÜVENLİ HALE GETİRİLDİ) ---
 
-  // 1. HERKESE DUYURU YAP (GLOBAL)
+  // 🔒 GÜVENLİK KONTROLÜ FONKSİYONU
+  async function checkAdminAuth() {
+    "use server";
+    const currentUserData = await currentUser();
+    if (!currentUserData || currentUserData.id !== ADMIN_ID) {
+        throw new Error("UNAUTHORIZED_ACTION");
+    }
+  }
+
+  // 1. HERKESE DUYURU YAP
   async function sendGlobalNotification(formData: FormData) {
     "use server";
+    await checkAdminAuth(); // 👈 BU SATIR HAYAT KURTARIR
+    
     const title = formData.get("title") as string;
     const message = formData.get("message") as string;
     const type = formData.get("type") as string;
 
     if(!title || !message) return;
 
-    // Tüm kullanıcıların ID'lerini al
     const allUsers = await prisma.user.findMany({ select: { id: true } });
 
-    // Hepsine tek tek bildirim oluştur
     const notifications = allUsers.map(u => ({
         userId: u.id,
         title,
         message,
-        type, // INFO, WARNING, GIFT, SUCCESS
+        type, 
         isRead: false
     }));
 
-    // createMany ile toplu ekleme
-    await prisma.notification.createMany({
-        data: notifications
-    });
-    
+    await prisma.notification.createMany({ data: notifications });
     redirect("/admin");
   }
 
   // 2. KİŞİYE ÖZEL MESAJ
   async function sendPrivateNotification(formData: FormData) {
     "use server";
+    await checkAdminAuth(); // 👈 GÜVENLİK
+    
     const targetUserId = formData.get("userId") as string;
     const message = formData.get("message") as string;
 
@@ -78,17 +90,22 @@ export default async function AdminDashboard() {
     redirect("/admin");
   }
 
-  // 3. DİĞER İŞLEMLER (Ban, Puan, Yorum)
+  // 3. BANLAMA İŞLEMİ
   async function toggleBan(formData: FormData) {
     "use server";
+    await checkAdminAuth(); // 👈 GÜVENLİK
+
     const targetUserId = formData.get("userId") as string;
     const currentStatus = formData.get("currentStatus") === "true";
     await prisma.user.update({ where: { id: targetUserId }, data: { isBanned: !currentStatus } });
     redirect("/admin");
   }
 
+  // 4. PUAN YÖNETİMİ (Para Basma Makinesi)
   async function managePoints(formData: FormData) {
     "use server";
+    await checkAdminAuth(); // 👈 GÜVENLİK (Burada olmazsa herkes kendine puan basar!)
+
     const targetUserId = formData.get("userId") as string;
     const amount = parseInt(formData.get("amount") as string);
     if (isNaN(amount) || amount === 0) return;
@@ -103,14 +120,18 @@ export default async function AdminDashboard() {
     redirect("/admin");
   }
 
+  // 5. YORUM ONAYLA
   async function approveComment(formData: FormData) {
     "use server";
+    await checkAdminAuth(); // 👈 GÜVENLİK
     await prisma.comment.update({ where: { id: formData.get("commentId") as string }, data: { isApproved: true } });
     redirect("/admin");
   }
 
+  // 6. YORUM SİL
   async function deleteComment(formData: FormData) {
     "use server";
+    await checkAdminAuth(); // 👈 GÜVENLİK
     await prisma.comment.delete({ where: { id: formData.get("commentId") as string } });
     redirect("/admin");
   }
@@ -121,17 +142,19 @@ export default async function AdminDashboard() {
         
         <div className="flex justify-between items-end mb-10">
             <div>
-                <h1 className="text-4xl font-black text-white uppercase tracking-tighter">GOD MODE</h1>
-                <p className="text-gray-400">Yönetim Paneli v2.1</p>
+                <h1 className="text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+                  <ShieldCheck className="text-[#00FFFF]" size={40}/> GOD MODE
+                </h1>
+                <p className="text-gray-400">Yönetim Paneli v2.1 (Secured)</p>
             </div>
             <div className="text-right">
                 <span className="text-[#00FFFF] font-bold text-xl">{users.length}</span> <span className="text-xs text-gray-500 uppercase tracking-wider">Kullanıcı</span>
             </div>
         </div>
 
-        {/* --- BÖLÜM 1: DUYURU İSTASYONU (BROADCAST) --- */}
-        <div className="bg-gradient-to-r from-[#0A1120] to-[#0f192e] border border-white/10 rounded-2xl p-6 mb-16 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
+        {/* --- BÖLÜM 1: DUYURU İSTASYONU --- */}
+        <div className="bg-gradient-to-r from-[#0A1120] to-[#0f192e] border border-white/10 rounded-2xl p-6 mb-16 relative overflow-hidden group hover:border-[#00FFFF]/30 transition-all">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Megaphone size={120} />
             </div>
             
@@ -142,8 +165,8 @@ export default async function AdminDashboard() {
                 
                 <form action={sendGlobalNotification} className="flex flex-col md:flex-row gap-4 items-end">
                     <div className="flex-1 w-full space-y-2">
-                        <input type="text" name="title" placeholder="Duyuru Başlığı (Örn: Turnuva Başlıyor!)" className="w-full bg-black/40 border border-white/10 rounded px-4 py-2 text-white focus:border-[#00FFFF] outline-none" required />
-                        <input type="text" name="message" placeholder="Mesaj İçeriği..." className="w-full bg-black/40 border border-white/10 rounded px-4 py-2 text-white focus:border-[#00FFFF] outline-none" required />
+                        <input type="text" name="title" placeholder="Duyuru Başlığı (Örn: Turnuva Başlıyor!)" className="w-full bg-black/40 border border-white/10 rounded px-4 py-2 text-white focus:border-[#00FFFF] outline-none transition-colors" required />
+                        <input type="text" name="message" placeholder="Mesaj İçeriği..." className="w-full bg-black/40 border border-white/10 rounded px-4 py-2 text-white focus:border-[#00FFFF] outline-none transition-colors" required />
                     </div>
                     
                     <div className="w-full md:w-48 space-y-2">
@@ -153,7 +176,7 @@ export default async function AdminDashboard() {
                             <option value="WARNING">Uyarı (Kırmızı)</option>
                             <option value="SUCCESS">Başarı (Yeşil)</option>
                         </select>
-                        <button className="w-full bg-[#00FFFF] hover:bg-white text-black font-bold py-2 rounded transition-all shadow-[0_0_15px_rgba(0,255,255,0.2)]">
+                        <button className="w-full bg-[#00FFFF] hover:bg-white text-black font-bold py-2 rounded transition-all shadow-[0_0_15px_rgba(0,255,255,0.2)] hover:shadow-[0_0_25px_rgba(0,255,255,0.5)]">
                             HERKESE GÖNDER
                         </button>
                     </div>
@@ -183,54 +206,41 @@ export default async function AdminDashboard() {
                     <tbody className="divide-y divide-white/5">
                         {users.map((u) => (
                             <tr key={u.id} className={`hover:bg-white/5 transition-colors ${u.isBanned ? 'bg-red-900/10' : ''}`}>
-                                {/* KULLANICI */}
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
                                         <Image src={u.imageUrl || "/file.svg"} alt="" width={40} height={40} className="rounded-full border border-white/10" />
                                         <div>
                                             <p className={`font-bold ${u.isBanned ? 'text-red-500 line-through' : 'text-white'}`}>
-  {u.firstName || u.lastName 
-    ? `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() 
-    : (u.username || "Oyuncu")}
-</p>
+                                              {u.firstName || u.lastName ? `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() : (u.username || "Oyuncu")}
+                                            </p>
                                             <p className="text-[10px] text-gray-600 font-mono tracking-tighter">ID: {u.id}</p>
                                         </div>
                                     </div>
                                 </td>
-
-                                {/* PUAN */}
                                 <td className="p-4 font-mono text-[#00FFFF] font-bold text-lg">{u.currentPoints} SP</td>
-
-                                {/* DURUM */}
                                 <td className="p-4">
-                                    {u.isBanned ? <span className="text-red-500 font-bold text-xs">BANLI</span> : <span className="text-green-500 font-bold text-xs">AKTİF</span>}
+                                    {u.isBanned ? <span className="text-red-500 font-bold text-xs bg-red-500/10 px-2 py-1 rounded">BANLI</span> : <span className="text-emerald-500 font-bold text-xs bg-emerald-500/10 px-2 py-1 rounded">AKTİF</span>}
                                 </td>
-
-                                {/* PUAN EKLE */}
                                 <td className="p-4">
                                     <form action={managePoints} className="flex items-center gap-2">
                                         <input type="hidden" name="userId" value={u.id} />
-                                        <input type="number" name="amount" placeholder="+/-" className="w-16 bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-xs" />
-                                        <button className="bg-[#00FFFF]/10 text-[#00FFFF] p-1.5 rounded"><Save size={14}/></button>
+                                        <input type="number" name="amount" placeholder="+/-" className="w-16 bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-xs focus:border-[#00FFFF] outline-none" />
+                                        <button className="bg-[#00FFFF]/10 text-[#00FFFF] p-1.5 rounded hover:bg-[#00FFFF] hover:text-black transition-colors"><Save size={14}/></button>
                                     </form>
                                 </td>
-
-                                {/* ÖZEL MESAJ */}
                                 <td className="p-4">
                                     <form action={sendPrivateNotification} className="flex items-center gap-2">
                                         <input type="hidden" name="userId" value={u.id} />
-                                        <input type="text" name="message" placeholder="Mesaj..." className="w-32 bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-xs" />
-                                        <button className="bg-blue-500/10 text-blue-400 p-1.5 rounded hover:bg-blue-500 hover:text-white"><Send size={14}/></button>
+                                        <input type="text" name="message" placeholder="Mesaj..." className="w-32 bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-xs focus:border-blue-400 outline-none" />
+                                        <button className="bg-blue-500/10 text-blue-400 p-1.5 rounded hover:bg-blue-500 hover:text-white transition-colors"><Send size={14}/></button>
                                     </form>
                                 </td>
-
-                                {/* BAN */}
                                 <td className="p-4 text-right">
                                     {u.id !== ADMIN_ID && (
                                         <form action={toggleBan}>
                                             <input type="hidden" name="userId" value={u.id} />
                                             <input type="hidden" name="currentStatus" value={String(u.isBanned)} />
-                                            <button className="text-gray-500 hover:text-red-500 transition-colors"><Ban size={18}/></button>
+                                            <button className="text-gray-500 hover:text-red-500 transition-colors p-2 hover:bg-red-500/10 rounded"><Ban size={18}/></button>
                                         </form>
                                     )}
                                 </td>
@@ -250,7 +260,7 @@ export default async function AdminDashboard() {
             <div className="p-10 text-center border border-dashed border-white/10 rounded-2xl text-gray-500">Temiz iş. Onay bekleyen yorum yok.</div>
           ) : (
             pendingComments.map((comment) => (
-              <div key={comment.id} className="bg-[#0A1120] border border-white/10 p-6 rounded-2xl flex flex-col md:flex-row gap-6 justify-between group">
+              <div key={comment.id} className="bg-[#0A1120] border border-white/10 p-6 rounded-2xl flex flex-col md:flex-row gap-6 justify-between group hover:border-white/20 transition-colors">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="font-bold text-[#00FFFF]">{comment.user?.username || "İsimsiz"}</span>
@@ -259,8 +269,8 @@ export default async function AdminDashboard() {
                   <p className="text-gray-300 bg-black/30 p-3 rounded-lg border border-white/5">{comment.content}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <form action={deleteComment}><input type="hidden" name="commentId" value={comment.id} /><button className="px-4 py-2 bg-red-500/10 text-red-500 rounded-lg font-bold text-sm"><Trash2 size={16} /></button></form>
-                  <form action={approveComment}><input type="hidden" name="commentId" value={comment.id} /><button className="px-6 py-2 bg-[#00FFFF] text-black rounded-lg font-bold text-sm"><CheckCircle size={16} /></button></form>
+                  <form action={deleteComment}><input type="hidden" name="commentId" value={comment.id} /><button className="px-4 py-2 bg-red-500/10 text-red-500 rounded-lg font-bold text-sm hover:bg-red-500 hover:text-white transition-colors flex items-center gap-2"><Trash2 size={16} /> REDDET</button></form>
+                  <form action={approveComment}><input type="hidden" name="commentId" value={comment.id} /><button className="px-6 py-2 bg-[#00FFFF] text-black rounded-lg font-bold text-sm hover:bg-white transition-colors flex items-center gap-2"><CheckCircle size={16} /> ONAYLA</button></form>
                 </div>
               </div>
             ))
