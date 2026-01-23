@@ -5,16 +5,15 @@ interface AvatarFrameProps {
   frameType: string;
 }
 
-// ⬇️ DÜZELTME BURADA: Başına 'export' ekledik!
+// ⬇️ ARTIK HEPSİ LOCAL DOSYA! (Linkler gitti)
 export const FRAMES: Record<string, string> = {
-  // Senin mevcutlar
   DARKIN: "/frames/darkin.png",
   IONIA: "/frames/ionia.png",
   HEXTECH: "/frames/hextech.png",
-  BASIC: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/content/src/leagueclient/levelprogression/level_borders/level_border_30.png",
-  CHALLENGER: "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/content/src/leagueclient/levelprogression/level_borders/level_border_500.png",
+  // 🛠️ Basic ve Challenger artık senin dosyalarından okunuyor
+  BASIC: "/frames/basic.png",
+  CHALLENGER: "/frames/challenger.png",
   
-  // 🔥 Yeni eklenenler
   SHADOW: "/frames/shadow.png",
   VOID: "/frames/void.png",
   FRELJORD: "/frames/freljord.png"
@@ -22,13 +21,14 @@ export const FRAMES: Record<string, string> = {
 
 // ----------------------------------------------------------------------
 // 🛠️ KRAL, BEDEN AYARLARI (Senin Ayarların Korundu ✅)
+// Not: Yeni Basic ve Challenger png'leri için buradaki %63 ile oynayabilirsin.
 // ----------------------------------------------------------------------
 const FRAME_SIZES: Record<string, string> = {
   DARKIN: "70%",
   IONIA: "76%",
   HEXTECH: "77%",
-  BASIC: "63%",
-  CHALLENGER: "63%",
+  BASIC: "80%",      // Yeni PNG'ye göre bunu değiştirmen gerekebilir
+  CHALLENGER: "71%", // Yeni PNG'ye göre bunu değiştirmen gerekebilir
   SHADOW: "68%",
   VOID: "69%",
   FRELJORD: "74%"
