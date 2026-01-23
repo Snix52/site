@@ -24,14 +24,14 @@ export const FRAMES: Record<string, string> = {
 // 🛠️ KRAL, BEDEN AYARLARI (Senin Ayarların Korundu ✅)
 // ----------------------------------------------------------------------
 const FRAME_SIZES: Record<string, string> = {
-  DARKIN: "65%",
-  IONIA: "60%",
-  HEXTECH: "58%",
+  DARKIN: "70%",
+  IONIA: "76%",
+  HEXTECH: "77%",
   BASIC: "63%",
   CHALLENGER: "63%",
-  SHADOW: "65%",
-  VOID: "60%",
-  FRELJORD: "56%"
+  SHADOW: "68%",
+  VOID: "69%",
+  FRELJORD: "74%"
 };
 // ----------------------------------------------------------------------
 
