@@ -78,8 +78,11 @@ export default function Navbar() {
       const res = await fetch('/api/user/claim', { method: 'POST' });
       
       if (!res.ok) {
-        const errorText = await res.text();
-        if (res.status === 400 && errorText.includes("Already claimed")) return; 
+        const payload = await res.json().catch(() => ({}));
+        if (res.status === 400) return;
+        if (res.status === 403 && payload?.message) {
+          alert(payload.message);
+        }
         setLastClaim(null); 
         return;
       }
