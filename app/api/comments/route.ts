@@ -17,8 +17,17 @@ export async function GET(request: Request) {
         guideId,
         isApproved: true 
       },
-      include: {
-        user: true, 
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        user: {
+          select: {
+            username: true,
+            firstName: true,
+            imageUrl: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -55,8 +64,15 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { content, guideId } = body;
 
-    if (!content || !guideId) {
+    const trimmedContent = typeof content === 'string' ? content.trim() : '';
+    const trimmedGuideId = typeof guideId === 'string' ? guideId.trim() : '';
+
+    if (!trimmedContent || !trimmedGuideId) {
       return NextResponse.json({ error: 'İçerik eksik' }, { status: 400 });
+    }
+
+    if (trimmedContent.length > 1000) {
+      return NextResponse.json({ error: 'Yorum çok uzun (maksimum 1000 karakter).' }, { status: 400 });
     }
 
     // D. KULLANICIYI GARANTİYE AL (Upsert)
@@ -87,8 +103,8 @@ export async function POST(request: Request) {
 
     const newComment = await prisma.comment.create({
       data: {
-        content,
-        guideId,
+        content: trimmedContent,
+        guideId: trimmedGuideId,
         userId: user.id,
         isApproved: isAdmin ? true : false, // Adminse direkt onayla, değilse bekle
       },
