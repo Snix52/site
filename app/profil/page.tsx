@@ -11,10 +11,9 @@ export default async function ProfilPage() {
     redirect("/sign-in");
   }
 
-  // Akıllı İsim Seçici: Username yoksa -> İsim -> O da yoksa -> Mailin başı
-  const displayName = user.username 
-    || user.firstName 
-    || user.emailAddresses[0].emailAddress.split('@')[0];
+  const primaryEmail = user.emailAddresses[0]?.emailAddress ?? null;
+  const emailPrefix = primaryEmail ? primaryEmail.split("@")[0] : null;
+  const displayName = user.username || user.firstName || emailPrefix || "Oyuncu";
 
   let dbUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -24,23 +23,18 @@ export default async function ProfilPage() {
     dbUser = await prisma.user.create({
       data: {
         id: userId,
-        email: user.emailAddresses[0].emailAddress,
-        username: displayName, // Düzeltilen kısım burası
+        email: primaryEmail,
+        username: displayName,
         imageUrl: user.imageUrl,
       },
     });
-  } else {
-    // Kullanıcı zaten varsa ve ismi boşsa güncelle
-    if (dbUser.username !== displayName) {
-       await prisma.user.update({
-         where: { id: userId },
-         data: { username: displayName }
-       });
-       dbUser.username = displayName;
-    }
+  } else if (dbUser.username !== displayName) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { username: displayName },
+    });
+    dbUser.username = displayName;
   }
 
-  return (
-    <ProfileClient user={dbUser} />
-  );
+  return <ProfileClient user={dbUser} />;
 }
