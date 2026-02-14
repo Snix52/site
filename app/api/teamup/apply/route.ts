@@ -40,13 +40,13 @@ export async function GET(request: Request) {
   try {
     const user = await currentUser();
     if (!user) {
-      return NextResponse.json({ error: "Giris gerekli." }, { status: 401 });
+      return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const postId = (searchParams.get("postId") || "").trim();
     if (!postId) {
-      return NextResponse.json({ error: "Ilan ID gerekli." }, { status: 400 });
+      return NextResponse.json({ error: "İlan ID gerekli." }, { status: 400 });
     }
 
     const post = await prisma.teamPost.findUnique({
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
     });
 
     if (!post) {
-      return NextResponse.json({ error: "Ilan bulunamadi." }, { status: 404 });
+      return NextResponse.json({ error: "İlan bulunamadı." }, { status: 404 });
     }
     if (post.userId !== user.id) {
       return NextResponse.json({ error: "Bu ilana yetkin yok." }, { status: 403 });
@@ -93,7 +93,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("[TEAMUP_APPLY_GET_ERROR]", error);
-    return NextResponse.json({ error: "Basvurular yuklenemedi." }, { status: 500 });
+    return NextResponse.json({ error: "Başvurular yüklenemedi." }, { status: 500 });
   }
 }
 
@@ -101,12 +101,12 @@ export async function POST(request: Request) {
   try {
     const user = await currentUser();
     if (!user) {
-      return NextResponse.json({ error: "Giris gerekli." }, { status: 401 });
+      return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
     }
 
     const dbUser = await syncUserFromClerk(user);
     if (dbUser.isBanned) {
-      return NextResponse.json({ error: "Banli hesap basvuru yapamaz." }, { status: 403 });
+      return NextResponse.json({ error: "Banlı hesap başvuru yapamaz." }, { status: 403 });
     }
 
     const body = await request.json();
@@ -116,16 +116,16 @@ export async function POST(request: Request) {
     const discord = typeof body?.discord === "string" ? body.discord.trim() : "";
 
     if (!postId) {
-      return NextResponse.json({ error: "Ilan ID gerekli." }, { status: 400 });
+      return NextResponse.json({ error: "İlan ID gerekli." }, { status: 400 });
     }
     if (!desiredRole) {
-      return NextResponse.json({ error: "Gecerli bir rol sec." }, { status: 400 });
+      return NextResponse.json({ error: "Geçerli bir rol seç." }, { status: 400 });
     }
     if (!playerInfo || playerInfo.length > 400) {
-      return NextResponse.json({ error: "Oyuncu bilgisi 1-400 karakter olmali." }, { status: 400 });
+      return NextResponse.json({ error: "Oyuncu bilgisi 1-400 karakter olmalı." }, { status: 400 });
     }
     if (!discord || discord.length > 50) {
-      return NextResponse.json({ error: "Discord bilgisi 1-50 karakter olmali." }, { status: 400 });
+      return NextResponse.json({ error: "Discord bilgisi 1-50 karakter olmalı." }, { status: 400 });
     }
 
     const post = await prisma.teamPost.findUnique({
@@ -134,13 +134,13 @@ export async function POST(request: Request) {
     });
 
     if (!post) {
-      return NextResponse.json({ error: "Ilan bulunamadi." }, { status: 404 });
+      return NextResponse.json({ error: "İlan bulunamadı." }, { status: 404 });
     }
     if (!post.isActive) {
-      return NextResponse.json({ error: "Bu ilan artik aktif degil." }, { status: 400 });
+      return NextResponse.json({ error: "Bu ilan artık aktif değil." }, { status: 400 });
     }
     if (post.userId === user.id) {
-      return NextResponse.json({ error: "Kendi ilanina basvuramazsin." }, { status: 400 });
+      return NextResponse.json({ error: "Kendi ilanına başvuramazsın." }, { status: 400 });
     }
 
     const recentApplyCount = await prisma.teamApplication.count({
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
 
     if (recentApplyCount >= APPLY_RATE_MAX) {
       return NextResponse.json(
-        { error: "Cok hizli basvuru yapiyorsun. Biraz bekleyip tekrar dene." },
+        { error: "Çok hızlı başvuru yapıyorsun. Biraz bekleyip tekrar dene." },
         {
           status: 429,
           headers: { "Retry-After": String(Math.floor(APPLY_RATE_WINDOW_MS / 1000)) },
@@ -164,7 +164,7 @@ export async function POST(request: Request) {
       where: { teamPostId: post.id, status: "ACCEPTED" },
     });
     if (acceptedCount >= TEAM_SIZE - 1) {
-      return NextResponse.json({ error: "Takim dolu." }, { status: 400 });
+      return NextResponse.json({ error: "Takım dolu." }, { status: 400 });
     }
 
     const existing = await prisma.teamApplication.findUnique({
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
     });
 
     if (existing && (existing.status === "PENDING" || existing.status === "ACCEPTED")) {
-      return NextResponse.json({ error: "Bu ilana zaten basvurdun." }, { status: 400 });
+      return NextResponse.json({ error: "Bu ilana zaten başvurdun." }, { status: 400 });
     }
 
     const application = existing
@@ -199,7 +199,7 @@ export async function POST(request: Request) {
     return NextResponse.json(application);
   } catch (error) {
     console.error("[TEAMUP_APPLY_POST_ERROR]", error);
-    return NextResponse.json({ error: "Basvuru gonderilemedi. Lutfen tekrar dene." }, { status: 500 });
+    return NextResponse.json({ error: "Başvuru gönderilemedi. Lütfen tekrar dene." }, { status: 500 });
   }
 }
 
@@ -214,14 +214,14 @@ export async function PATCH(request: Request) {
   try {
     const user = await currentUser();
     if (!user) {
-      return NextResponse.json({ error: "Giris gerekli." }, { status: 401 });
+      return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
     }
 
     const body = await request.json();
     const applicationId = typeof body?.applicationId === "string" ? body.applicationId.trim() : "";
     const action = typeof body?.action === "string" ? body.action.trim().toUpperCase() : "";
     if (!applicationId || (action !== "ACCEPT" && action !== "REJECT")) {
-      return NextResponse.json({ error: "Gecersiz istek." }, { status: 400 });
+      return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
     }
 
     const result = await runSerializableWithRetry<DecisionResult>(() =>
@@ -275,21 +275,22 @@ export async function PATCH(request: Request) {
     );
 
     if (result.status === "NOT_FOUND") {
-      return NextResponse.json({ error: "Basvuru bulunamadi." }, { status: 404 });
+      return NextResponse.json({ error: "Başvuru bulunamadı." }, { status: 404 });
     }
     if (result.status === "FORBIDDEN") {
-      return NextResponse.json({ error: "Bu islem icin yetkin yok." }, { status: 403 });
+      return NextResponse.json({ error: "Bu işlem için yetkin yok." }, { status: 403 });
     }
     if (result.status === "INACTIVE_POST") {
-      return NextResponse.json({ error: "Ilan aktif degil." }, { status: 400 });
+      return NextResponse.json({ error: "İlan aktif değil." }, { status: 400 });
     }
     if (result.status === "TEAM_FULL") {
-      return NextResponse.json({ error: "Takim dolu. Yeni kabul yapilamaz." }, { status: 400 });
+      return NextResponse.json({ error: "Takım dolu. Yeni kabul yapılamaz." }, { status: 400 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[TEAMUP_APPLY_PATCH_ERROR]", error);
-    return NextResponse.json({ error: "Basvuru guncellenemedi." }, { status: 500 });
+    return NextResponse.json({ error: "Başvuru güncellenemedi." }, { status: 500 });
   }
 }
+

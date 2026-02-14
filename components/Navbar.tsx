@@ -135,7 +135,8 @@ export default function Navbar() {
             <Link href="/hakkimizda" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Hakkımızda</Link>
             <Link href="/rehberler" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Rehberler</Link>
             <Link href="/takim-bul" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Takım Bul</Link>
-            
+            <Link href="/sosyal" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Sosyal</Link>
+
             {isAdmin && (
               <Link href="/admin" className="flex items-center gap-2 text-[10px] font-black text-red-500 hover:text-white hover:bg-red-600 transition-all uppercase tracking-[0.2em] border border-red-500/30 px-3 py-1.5 rounded bg-red-500/5">
                  <ShieldAlert size={14} /> ADMIN PANELİ
@@ -207,4 +208,3 @@ export default function Navbar() {
     </>
   );
 }
-

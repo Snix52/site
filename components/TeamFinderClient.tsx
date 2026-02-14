@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { Check, MessageCircle, Plus, Radio, Target, X } from "lucide-react";
+import TeamChatModal from "@/components/TeamChatModal";
 
 const ROLES = ["TOP", "JUNGLE", "MID", "ADC", "SUPP", "FILL"] as const;
 type Role = (typeof ROLES)[number];
@@ -23,6 +24,7 @@ type TeamPost = {
   acceptedCount: number;
   filledSlots: number;
   hasApplied: boolean;
+  myApplicationStatus: "NONE" | "PENDING" | "ACCEPTED" | "REJECTED";
   user: {
     id: string;
     username: string | null;
@@ -109,6 +111,7 @@ export default function TeamFinderClient() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [applyPost, setApplyPost] = useState<TeamPost | null>(null);
   const [ownerAppsPost, setOwnerAppsPost] = useState<TeamPost | null>(null);
+  const [chatPost, setChatPost] = useState<TeamPost | null>(null);
   const [ownerApps, setOwnerApps] = useState<TeamApplication[]>([]);
   const [ownerAppsLoading, setOwnerAppsLoading] = useState(false);
 
@@ -138,11 +141,11 @@ export default function TeamFinderClient() {
       const query = role !== "ALL" ? `?role=${encodeURIComponent(role)}` : "";
       const res = await fetch(`/api/teamup${query}`);
       const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(buildErrorMessage(payload, "Ilanlar yuklenemedi."));
+      if (!res.ok) throw new Error(buildErrorMessage(payload, "İlanlar yüklenemedi."));
       setPosts(payload);
     } catch (error: unknown) {
       setPosts([]);
-      pushToast(error instanceof Error ? error.message : "Ilanlar yuklenemedi.", "error");
+      pushToast(error instanceof Error ? error.message : "İlanlar yüklenemedi.", "error");
     } finally {
       setLoading(false);
     }
@@ -172,12 +175,12 @@ export default function TeamFinderClient() {
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        pushToast(buildErrorMessage(payload, "Ilan olusturulamadi."), "error");
+        pushToast(buildErrorMessage(payload, "İlan oluşturulamadı."), "error");
         return;
       }
       setPostForm(emptyPostForm);
       setIsCreateModalOpen(false);
-      pushToast("Ilan basariyla yayinlandi.", "success");
+      pushToast("İlan başarıyla yayınlandı.", "success");
       await fetchPosts();
     } finally {
       setSendingPost(false);
@@ -212,12 +215,12 @@ export default function TeamFinderClient() {
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        pushToast(buildErrorMessage(payload, "Basvuru gonderilemedi."), "error");
+        pushToast(buildErrorMessage(payload, "Başvuru gönderilemedi."), "error");
         return;
       }
       setApplyPost(null);
       setApplyForm(emptyApplyForm);
-      pushToast("Basvurun gonderildi.", "success");
+      pushToast("Başvurun gönderildi.", "success");
       await fetchPosts();
     } finally {
       setSendingApply(false);
@@ -228,10 +231,10 @@ export default function TeamFinderClient() {
     const res = await fetch(`/api/teamup?id=${encodeURIComponent(id)}`, { method: "DELETE" });
     const payload = await res.json().catch(() => ({}));
     if (!res.ok) {
-      pushToast(buildErrorMessage(payload, "Ilan kapatilamadi."), "error");
+      pushToast(buildErrorMessage(payload, "İlan kapatılamadı."), "error");
       return;
     }
-    pushToast("Ilan kapatildi.", "success");
+    pushToast("İlan kapatıldı.", "success");
     await fetchPosts();
   };
 
@@ -243,7 +246,7 @@ export default function TeamFinderClient() {
       const res = await fetch(`/api/teamup/apply?postId=${encodeURIComponent(post.id)}`);
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        pushToast(buildErrorMessage(payload, "Basvurular yuklenemedi."), "error");
+        pushToast(buildErrorMessage(payload, "Başvurular yüklenemedi."), "error");
         setOwnerAppsPost(null);
         return;
       }
@@ -263,11 +266,11 @@ export default function TeamFinderClient() {
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        pushToast(buildErrorMessage(payload, "Basvuru guncellenemedi."), "error");
+        pushToast(buildErrorMessage(payload, "Başvuru güncellenemedi."), "error");
         return;
       }
 
-      pushToast(action === "ACCEPT" ? "Oyuncu kabul edildi." : "Basvuru reddedildi.", "success");
+      pushToast(action === "ACCEPT" ? "Oyuncu kabul edildi." : "Başvuru reddedildi.", "success");
       if (ownerAppsPost) await openOwnerApplications(ownerAppsPost);
       await fetchPosts();
     } finally {
@@ -296,13 +299,13 @@ export default function TeamFinderClient() {
         <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0A1120]/95 via-[#0B1628]/95 to-[#070D19]/95 p-8 md:p-10 mb-8 shadow-[0_0_40px_rgba(0,255,255,0.08)]">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div className="space-y-3">
-              <p className="text-[11px] uppercase tracking-[0.25em] text-cyan-300/80 font-bold">Takim Radar</p>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-cyan-300/80 font-bold">Takım Radarı</p>
               <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none">
-                Takim
+                Takım
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400"> Bul</span>
               </h1>
               <p className="text-slate-300 max-w-2xl">
-                Takima katilmak icin basvuru yap. Ilan sahibi kabul ederse takim dolulugu aninda guncellenir.
+                Takıma katılmak için başvuru yap. İlan sahibi kabul ederse takım doluluğu anında güncellenir.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-3 w-full lg:w-[360px]">
@@ -315,7 +318,7 @@ export default function TeamFinderClient() {
                 <p className="text-xl font-black text-white">6</p>
               </div>
               <div className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 p-3 text-center">
-                <p className="text-[10px] uppercase text-cyan-200/80">Ilan Limitin</p>
+                <p className="text-[10px] uppercase text-cyan-200/80">İlan Limitin</p>
                 <p className="text-xl font-black text-cyan-200">{myActiveCount}/2</p>
               </div>
             </div>
@@ -350,7 +353,7 @@ export default function TeamFinderClient() {
             {!isSignedIn ? (
               <SignInButton mode="modal">
                 <button className="px-4 py-2 rounded-lg bg-cyan-500 text-black text-sm font-black hover:bg-white transition-colors">
-                  Basvuru Icin Giris Yap
+                  Başvuru İçin Giriş Yap
                 </button>
               </SignInButton>
             ) : (
@@ -359,23 +362,24 @@ export default function TeamFinderClient() {
                 className="px-4 py-2 rounded-lg bg-cyan-500 text-black text-sm font-black hover:bg-white transition-colors flex items-center gap-2"
               >
                 <Plus size={16} />
-                Ilan Yayinla
+                İlan Yayınla
               </button>
             )}
           </div>
 
           {loading ? (
-            <div className="rounded-2xl border border-white/10 bg-black/25 p-8 text-slate-400">Ilanlar yukleniyor...</div>
+            <div className="rounded-2xl border border-white/10 bg-black/25 p-8 text-slate-400">İlanlar yükleniyor...</div>
           ) : posts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-white/20 bg-black/20 p-8">
               <p className="text-white font-bold mb-1">Bu filtrede ilan yok.</p>
-              <p className="text-sm text-slate-400">Ilk ilani acip ekibini toplayabilirsin.</p>
+              <p className="text-sm text-slate-400">İlk ilanı açıp ekibini toplayabilirsin.</p>
             </div>
           ) : (
             <div className="space-y-4">
               {posts.map((p) => {
                 const isOwner = p.userId === myUserId;
                 const isFull = p.filledSlots >= p.maxPlayers;
+                const canOpenChat = isOwner || p.myApplicationStatus === "ACCEPTED";
 
                 return (
                   <article
@@ -392,7 +396,7 @@ export default function TeamFinderClient() {
 
                       <div className="text-right">
                         <p className="text-[11px] text-cyan-200 font-bold">Doluluk: {p.filledSlots}/{p.maxPlayers}</p>
-                        <p className="text-[11px] text-slate-400">Basvuru: {p.applicationCount}</p>
+                        <p className="text-[11px] text-slate-400">Başvuru: {p.applicationCount}</p>
                       </div>
                     </div>
 
@@ -406,7 +410,7 @@ export default function TeamFinderClient() {
                         </span>
                       ))}
                       <span className="text-[11px] px-2.5 py-1 rounded-md bg-white/5 text-slate-300 border border-white/10">
-                        {p.rankRange || "Any"}
+                        {p.rankRange || "Fark etmez"}
                       </span>
                       <span className="text-[11px] px-2.5 py-1 rounded-md bg-white/5 text-slate-300 border border-white/10">
                         {p.server}
@@ -418,43 +422,56 @@ export default function TeamFinderClient() {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-2 text-emerald-300 text-sm font-semibold">
                         <MessageCircle size={15} />
-                        Iletisim: Basvuru onayi sonrasi ilan sahibiyle bulus
+                        İletişim: Başvurun kabul edilirse ilan sahibi seninle iletişime geçer
                       </div>
 
                       <div className="flex items-center gap-2">
+                        {canOpenChat ? (
+                          <button
+                            onClick={() => setChatPost(p)}
+                            className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 font-bold"
+                          >
+                            Takım Sohbeti
+                          </button>
+                        ) : null}
+
                         {isOwner ? (
                           <>
                             <button
                               onClick={() => openOwnerApplications(p)}
                               className="text-xs px-3 py-1.5 rounded-lg bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 font-bold"
                             >
-                              Basvurular ({p.applicationCount})
+                              Başvurular ({p.applicationCount})
                             </button>
                             <button
                               onClick={() => closeMyPost(p.id)}
                               className="text-xs px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 font-bold"
                             >
-                              Ilani Kapat
+                              İlanı Kapat
                             </button>
                           </>
                         ) : !isSignedIn ? (
                           <SignInButton mode="modal">
-                            <button className="text-xs px-3 py-1.5 rounded-lg bg-cyan-500 text-black font-bold">Takima Katil</button>
+                            <button className="text-xs px-3 py-1.5 rounded-lg bg-cyan-500 text-black font-bold">Takıma Katıl</button>
                           </SignInButton>
+                        ) : p.myApplicationStatus === "ACCEPTED" ? (
+                          <span className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 font-bold">
+                            Kabul Edildi
+                          </span>
                         ) : p.hasApplied ? (
                           <span className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 font-bold">
-                            Basvuru Yapildi
+                            Başvuru Yapıldı
                           </span>
                         ) : isFull ? (
                           <span className="text-xs px-3 py-1.5 rounded-lg bg-slate-500/15 border border-slate-400/30 text-slate-300 font-bold">
-                            Takim Dolu
+                            Takım Dolu
                           </span>
                         ) : (
                           <button
                             onClick={() => openApplyModal(p)}
                             className="text-xs px-3 py-1.5 rounded-lg bg-cyan-500 text-black font-bold"
                           >
-                            Takima Katil
+                            Takıma Katıl
                           </button>
                         )}
                       </div>
@@ -472,8 +489,8 @@ export default function TeamFinderClient() {
           <div className="relative w-full max-w-2xl rounded-2xl border border-white/15 bg-gradient-to-b from-[#0B1322] to-[#070D17] p-6 md:p-7">
             <div className="flex items-start justify-between gap-4 mb-5">
               <div>
-                <h2 className="text-white font-black text-2xl">Ilan Yayinla</h2>
-                <p className="text-sm text-slate-400 mt-1">Maksimum 2 aktif ilan acabilirsin.</p>
+                <h2 className="text-white font-black text-2xl">İlan Yayınla</h2>
+                <p className="text-sm text-slate-400 mt-1">Maksimum 2 aktif ilan açabilirsin.</p>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
@@ -485,14 +502,14 @@ export default function TeamFinderClient() {
 
             {myActiveCount >= 2 ? (
               <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-amber-200 text-sm">
-                Aktif ilan limitine ulastin. Yeni ilan acmak icin once bir ilani kapat.
+                Aktif ilan limitine ulaştın. Yeni ilan açmak için önce bir ilanı kapat.
               </div>
             ) : (
               <form onSubmit={createPost} className="space-y-4">
                 <input
                   value={postForm.title}
                   onChange={(e) => setPostForm((prev) => ({ ...prev, title: e.target.value }))}
-                  placeholder="Baslik (orn: Clash ekibi ariyorum)"
+                  placeholder="Başlık (örn: Clash ekibi arıyorum)"
                   className="w-full px-3 py-2.5 rounded-lg bg-black/40 border border-white/10 text-sm"
                   maxLength={80}
                   required
@@ -528,7 +545,7 @@ export default function TeamFinderClient() {
                   <input
                     value={postForm.rankRange}
                     onChange={(e) => setPostForm((prev) => ({ ...prev, rankRange: e.target.value }))}
-                    placeholder="Rank (Emerald+)"
+                    placeholder="Lig Aralığı (Emerald+)"
                     className="w-full px-3 py-2.5 rounded-lg bg-black/40 border border-white/10 text-sm"
                     maxLength={40}
                   />
@@ -545,7 +562,7 @@ export default function TeamFinderClient() {
                   disabled={sendingPost}
                   className="px-5 py-2.5 rounded-lg bg-cyan-500 text-black font-black hover:bg-white transition-colors disabled:opacity-60"
                 >
-                  {sendingPost ? "Gonderiliyor..." : "Yayinla"}
+                  {sendingPost ? "Gönderiliyor..." : "Yayınla"}
                 </button>
               </form>
             )}
@@ -559,7 +576,7 @@ export default function TeamFinderClient() {
           <div className="relative w-full max-w-xl rounded-2xl border border-white/15 bg-gradient-to-b from-[#0B1322] to-[#070D17] p-6">
             <div className="flex items-start justify-between gap-4 mb-5">
               <div>
-                <h2 className="text-white font-black text-2xl">Takima Katil</h2>
+                <h2 className="text-white font-black text-2xl">Takıma Katıl</h2>
                 <p className="text-sm text-slate-400 mt-1">{applyPost.title}</p>
               </div>
               <button
@@ -572,7 +589,7 @@ export default function TeamFinderClient() {
 
             <form onSubmit={submitApplication} className="space-y-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-bold mb-2">Basvurdugun Rol</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-bold mb-2">Başvurduğun Rol</p>
                 <div className="flex flex-wrap gap-2">
                   {ROLES.map((r) => (
                     <button
@@ -594,7 +611,7 @@ export default function TeamFinderClient() {
               <input
                 value={applyForm.discord}
                 onChange={(e) => setApplyForm((prev) => ({ ...prev, discord: e.target.value }))}
-                placeholder="Discord kullanici adin (orn: snix#1234)"
+                placeholder="Discord kullanıcı adın (örn: snix#1234)"
                 className="w-full px-3 py-2.5 rounded-lg bg-black/40 border border-white/10 text-sm"
                 maxLength={50}
                 required
@@ -603,7 +620,7 @@ export default function TeamFinderClient() {
               <textarea
                 value={applyForm.playerInfo}
                 onChange={(e) => setApplyForm((prev) => ({ ...prev, playerInfo: e.target.value }))}
-                placeholder="Kendini tanit: rank, oyun saatlerin, shotcall/oyun tarzin..."
+                placeholder="Kendini tanıt: lig, oyun saatlerin, shotcall/oyun tarzın..."
                 className="w-full px-3 py-2.5 rounded-lg bg-black/40 border border-white/10 text-sm h-28 resize-none"
                 maxLength={400}
                 required
@@ -614,7 +631,7 @@ export default function TeamFinderClient() {
                 disabled={sendingApply}
                 className="px-5 py-2.5 rounded-lg bg-cyan-500 text-black font-black hover:bg-white transition-colors disabled:opacity-60"
               >
-                {sendingApply ? "Gonderiliyor..." : "Basvuru Gonder"}
+                {sendingApply ? "Gönderiliyor..." : "Başvuru Gönder"}
               </button>
             </form>
           </div>
@@ -626,7 +643,7 @@ export default function TeamFinderClient() {
           <div className="relative w-full max-w-4xl rounded-2xl border border-white/15 bg-gradient-to-b from-[#0B1322] to-[#070D17] p-6">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="w-full">
-                <h2 className="text-white font-black text-2xl">Basvurular</h2>
+                <h2 className="text-white font-black text-2xl">Başvurular</h2>
                 <p className="text-sm text-slate-400 mt-1">
                   {ownerAppsPost.title} | Doluluk: {ownerFilledSlots}/{ownerMaxPlayers} ({ownerFillPercent}%)
                 </p>
@@ -646,9 +663,9 @@ export default function TeamFinderClient() {
             </div>
 
             {ownerAppsLoading ? (
-              <div className="rounded-xl border border-white/10 p-6 text-slate-400">Basvurular yukleniyor...</div>
+              <div className="rounded-xl border border-white/10 p-6 text-slate-400">Başvurular yükleniyor...</div>
             ) : ownerApps.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/20 p-6 text-slate-400">Henuz basvuru yok.</div>
+              <div className="rounded-xl border border-dashed border-white/20 p-6 text-slate-400">Henüz başvuru yok.</div>
             ) : (
               <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
                 <section className="rounded-xl border border-emerald-400/25 bg-emerald-500/5 p-4">
@@ -656,7 +673,7 @@ export default function TeamFinderClient() {
                     Kabul Edilen Oyuncular ({acceptedOwnerApps.length})
                   </p>
                   {acceptedOwnerApps.length === 0 ? (
-                    <p className="text-sm text-emerald-100/80">Henuz kabul edilen oyuncu yok.</p>
+                    <p className="text-sm text-emerald-100/80">Henüz kabul edilen oyuncu yok.</p>
                   ) : (
                     <div className="grid sm:grid-cols-2 gap-3">
                       {acceptedOwnerApps.map((a) => (
@@ -673,10 +690,10 @@ export default function TeamFinderClient() {
 
                 <section className="rounded-xl border border-amber-400/20 bg-black/20 p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-amber-200 font-bold mb-3">
-                    Bekleyen Basvurular ({pendingOwnerApps.length})
+                    Bekleyen Başvurular ({pendingOwnerApps.length})
                   </p>
                   {pendingOwnerApps.length === 0 ? (
-                    <p className="text-sm text-slate-300">Bekleyen basvuru yok.</p>
+                    <p className="text-sm text-slate-300">Bekleyen başvuru yok.</p>
                   ) : (
                     <div className="space-y-3">
                       {pendingOwnerApps.map((a) => (
@@ -686,7 +703,7 @@ export default function TeamFinderClient() {
                               {a.applicant.username || "Oyuncu"} | {a.desiredRole}
                             </p>
                             <span className="text-[11px] px-2 py-1 rounded border text-amber-200 border-amber-400/40 bg-amber-500/15">
-                              PENDING
+                              BEKLEMEDE
                             </span>
                           </div>
 
@@ -719,7 +736,7 @@ export default function TeamFinderClient() {
                 {rejectedOwnerApps.length > 0 ? (
                   <section className="rounded-xl border border-red-400/20 bg-red-500/5 p-4">
                     <p className="text-xs uppercase tracking-[0.16em] text-red-200 font-bold mb-3">
-                      Reddedilen Basvurular ({rejectedOwnerApps.length})
+                      Reddedilen Başvurular ({rejectedOwnerApps.length})
                     </p>
                     <div className="space-y-2">
                       {rejectedOwnerApps.map((a) => (
@@ -737,11 +754,20 @@ export default function TeamFinderClient() {
 
             <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-4">
               <Target size={14} />
-              Kabul edilen her oyuncu takim dolulugunu arttirir (orn: 2/5).
+              Kabul edilen her oyuncu takım doluluğunu artırır (örn: 2/5).
             </div>
           </div>
         </div>
       ) : null}
+
+      <TeamChatModal
+        isOpen={Boolean(chatPost)}
+        postId={chatPost?.id ?? null}
+        postTitle={chatPost?.title ?? ""}
+        onClose={() => setChatPost(null)}
+        pushToast={pushToast}
+      />
     </div>
   );
 }
+

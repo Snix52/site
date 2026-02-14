@@ -51,7 +51,12 @@ export async function GET(request: Request) {
 
     const appByPost = new Map<
       string,
-      { applicationCount: number; acceptedCount: number; hasApplied: boolean }
+      {
+        applicationCount: number;
+        acceptedCount: number;
+        hasApplied: boolean;
+        myApplicationStatus: "NONE" | "PENDING" | "ACCEPTED" | "REJECTED";
+      }
     >();
 
     if (postIds.length > 0) {
@@ -65,6 +70,7 @@ export async function GET(request: Request) {
           applicationCount: 0,
           acceptedCount: 0,
           hasApplied: false,
+          myApplicationStatus: "NONE" as const,
         };
 
         prev.applicationCount += 1;
@@ -78,6 +84,14 @@ export async function GET(request: Request) {
           prev.hasApplied = true;
         }
 
+        if (
+          signedUserId &&
+          app.applicantId === signedUserId &&
+          (app.status === "PENDING" || app.status === "ACCEPTED" || app.status === "REJECTED")
+        ) {
+          prev.myApplicationStatus = app.status;
+        }
+
         appByPost.set(app.teamPostId, prev);
       }
     }
@@ -87,6 +101,7 @@ export async function GET(request: Request) {
         applicationCount: 0,
         acceptedCount: 0,
         hasApplied: false,
+        myApplicationStatus: "NONE" as const,
       };
 
       const filledSlots = Math.min(TEAM_SIZE, 1 + counts.acceptedCount);
@@ -107,6 +122,7 @@ export async function GET(request: Request) {
         acceptedCount: counts.acceptedCount,
         filledSlots,
         hasApplied: counts.hasApplied,
+        myApplicationStatus: counts.myApplicationStatus,
         user: {
           id: post.user.id,
           username: post.user.username,
@@ -119,7 +135,7 @@ export async function GET(request: Request) {
     return NextResponse.json(safePosts);
   } catch (error) {
     console.error("[TEAMUP_GET_ERROR]", error);
-    return NextResponse.json({ error: "Ilanlar yuklenemedi." }, { status: 500 });
+    return NextResponse.json({ error: "İlanlar yüklenemedi." }, { status: 500 });
   }
 }
 
@@ -127,12 +143,12 @@ export async function POST(request: Request) {
   try {
     const clerkUser = await currentUser();
     if (!clerkUser) {
-      return NextResponse.json({ error: "Giris gerekli." }, { status: 401 });
+      return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
     }
 
     const dbUser = await syncUserFromClerk(clerkUser);
     if (dbUser.isBanned) {
-      return NextResponse.json({ error: "Banli hesap ilan acamaz." }, { status: 403 });
+      return NextResponse.json({ error: "Banlı hesap ilan açamaz." }, { status: 403 });
     }
 
     const activeCount = await prisma.teamPost.count({
@@ -140,7 +156,7 @@ export async function POST(request: Request) {
     });
 
     if (activeCount >= 2) {
-      return NextResponse.json({ error: "En fazla 2 aktif ilanin olabilir." }, { status: 429 });
+      return NextResponse.json({ error: "En fazla 2 aktif ilanın olabilir." }, { status: 429 });
     }
 
     const recentPostCreates = await prisma.teamPost.count({
@@ -152,7 +168,7 @@ export async function POST(request: Request) {
 
     if (recentPostCreates >= POST_RATE_MAX) {
       return NextResponse.json(
-        { error: "Cok hizli ilan aciyorsun. Biraz bekleyip tekrar dene." },
+        { error: "Çok hızlı ilan açıyorsun. Biraz bekleyip tekrar dene." },
         {
           status: 429,
           headers: { "Retry-After": String(Math.floor(POST_RATE_WINDOW_MS / 1000)) },
@@ -163,18 +179,18 @@ export async function POST(request: Request) {
     const body = await request.json();
     const title = typeof body?.title === "string" ? body.title.trim() : "";
     const description = typeof body?.description === "string" ? body.description.trim() : "";
-    const rankRange = typeof body?.rankRange === "string" ? body.rankRange.trim() : "Any";
+    const rankRange = typeof body?.rankRange === "string" ? body.rankRange.trim() : "Fark etmez";
     const server = typeof body?.server === "string" ? body.server.trim() : "TR";
     const rolesNeeded = sanitizeRoles(body?.rolesNeeded);
 
     if (!title || title.length > 80) {
-      return NextResponse.json({ error: "Baslik 1-80 karakter olmali." }, { status: 400 });
+      return NextResponse.json({ error: "Başlık 1-80 karakter olmalı." }, { status: 400 });
     }
     if (!description || description.length > 800) {
-      return NextResponse.json({ error: "Aciklama 1-800 karakter olmali." }, { status: 400 });
+      return NextResponse.json({ error: "Açıklama 1-800 karakter olmalı." }, { status: 400 });
     }
     if (rolesNeeded.length === 0) {
-      return NextResponse.json({ error: "En az bir rol sec." }, { status: 400 });
+      return NextResponse.json({ error: "En az bir rol seç." }, { status: 400 });
     }
 
     const created = await prisma.teamPost.create({
@@ -183,7 +199,7 @@ export async function POST(request: Request) {
         title,
         description,
         rolesNeeded,
-        rankRange: rankRange || "Any",
+        rankRange: rankRange || "Fark etmez",
         server: server || "TR",
         maxPlayers: TEAM_SIZE,
       },
@@ -192,7 +208,7 @@ export async function POST(request: Request) {
     return NextResponse.json(created);
   } catch (error) {
     console.error("[TEAMUP_POST_ERROR]", error);
-    return NextResponse.json({ error: "Ilan olusturulamadi. Lutfen tekrar dene." }, { status: 500 });
+    return NextResponse.json({ error: "İlan oluşturulamadı. Lütfen tekrar dene." }, { status: 500 });
   }
 }
 
@@ -200,13 +216,13 @@ export async function DELETE(request: Request) {
   try {
     const user = await currentUser();
     if (!user) {
-      return NextResponse.json({ error: "Giris gerekli." }, { status: 401 });
+      return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const postId = (searchParams.get("id") || "").trim();
     if (!postId) {
-      return NextResponse.json({ error: "Ilan ID gerekli." }, { status: 400 });
+      return NextResponse.json({ error: "İlan ID gerekli." }, { status: 400 });
     }
 
     const post = await prisma.teamPost.findUnique({
@@ -215,7 +231,7 @@ export async function DELETE(request: Request) {
     });
 
     if (!post) {
-      return NextResponse.json({ error: "Ilan bulunamadi." }, { status: 404 });
+      return NextResponse.json({ error: "İlan bulunamadı." }, { status: 404 });
     }
     if (post.userId !== user.id) {
       return NextResponse.json({ error: "Bu ilana yetkin yok." }, { status: 403 });
@@ -232,6 +248,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[TEAMUP_DELETE_ERROR]", error);
-    return NextResponse.json({ error: "Ilan kapatilamadi." }, { status: 500 });
+    return NextResponse.json({ error: "İlan kapatılamadı." }, { status: 500 });
   }
 }
+

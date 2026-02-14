@@ -13,6 +13,13 @@ enum StaffRole {
   ADMIN
 }
 
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELED
+}
+
 // 1. KULLANICI TABLOSU
 model User {
   id        String    @id // Clerk ID
@@ -54,6 +61,12 @@ model User {
   notifications    Notification[]
   teamPosts        TeamPost[]
   teamApplications TeamApplication[] @relation("TeamApplicant")
+  teamChatMessages TeamChatMessage[]
+  sentFriendRequests     FriendRequest[]     @relation("FriendRequestSender")
+  receivedFriendRequests FriendRequest[]     @relation("FriendRequestRecipient")
+  friendshipsAsUserA     Friendship[]        @relation("FriendshipUserA")
+  friendshipsAsUserB     Friendship[]        @relation("FriendshipUserB")
+  globalChatMessages     GlobalChatMessage[]
   adminActionsPerformed AdminActionLog[] @relation("AdminActor")
   adminActionsTargeted  AdminActionLog[] @relation("AdminTarget")
 }
@@ -111,6 +124,7 @@ model TeamPost {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications TeamApplication[]
+  chatMessages TeamChatMessage[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -138,6 +152,62 @@ model TeamApplication {
   @@unique([teamPostId, applicantId])
   @@index([teamPostId, status])
   @@index([applicantId, status])
+}
+
+model TeamChatMessage {
+  id         String   @id @default(cuid())
+  teamPostId String
+  senderId   String
+  content    String
+  createdAt  DateTime @default(now())
+
+  teamPost   TeamPost @relation(fields: [teamPostId], references: [id], onDelete: Cascade)
+  sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([teamPostId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+model FriendRequest {
+  id          String            @id @default(cuid())
+  senderId    String
+  recipientId String
+  status      FriendRequestStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  sender      User              @relation("FriendRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient   User              @relation("FriendRequestRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, recipientId])
+  @@index([recipientId, status, createdAt])
+  @@index([senderId, status, createdAt])
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  userAId   String
+  userBId   String
+  createdAt DateTime @default(now())
+
+  userA     User     @relation("FriendshipUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User     @relation("FriendshipUserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId])
+  @@index([userAId, createdAt])
+  @@index([userBId, createdAt])
+}
+
+model GlobalChatMessage {
+  id        String   @id @default(cuid())
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([senderId, createdAt])
 }
 
 model AdminActionLog {
