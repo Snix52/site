@@ -1,21 +1,27 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { currentUser } from '@clerk/nextjs/server';
+import { NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
 
-// 1. GET: ONAYLI YORUMLARI ÇEK
+import { prisma } from "@/lib/prisma";
+import { canModerateComments } from "@/lib/admin-auth";
+import { resolveStaffRole } from "@/lib/admin-auth-server";
+import { syncUserFromClerk } from "@/lib/user-sync";
+
+const COMMENT_RATE_WINDOW_MS = 60 * 1000;
+const COMMENT_RATE_MAX = 3;
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const guideId = searchParams.get('guideId');
+    const guideId = searchParams.get("guideId");
 
     if (!guideId) {
-      return NextResponse.json({ error: 'Rehber ID eksik' }, { status: 400 });
+      return NextResponse.json({ error: "Rehber ID eksik" }, { status: 400 });
     }
 
     const comments = await prisma.comment.findMany({
-      where: { 
+      where: {
         guideId,
-        isApproved: true 
+        isApproved: true,
       },
       select: {
         id: true,
@@ -29,91 +35,74 @@ export async function GET(request: Request) {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     return NextResponse.json(comments);
   } catch (error) {
-    console.error("GET Hatası:", error);
-    return NextResponse.json({ error: 'Yorumlar yüklenirken hata oluştu' }, { status: 500 });
+    console.error("[COMMENTS_GET_ERROR]", error);
+    return NextResponse.json({ error: "Yorumlar yuklenirken hata olustu" }, { status: 500 });
   }
 }
 
-// 2. POST: YORUM AT (BAN KONTROLLÜ)
 export async function POST(request: Request) {
   try {
-    // A. Clerk'ten kullanıcıyı al
     const user = await currentUser();
-
     if (!user) {
-      return NextResponse.json({ error: 'Giriş yapmalısın' }, { status: 401 });
+      return NextResponse.json({ error: "Giris yapmalisin" }, { status: 401 });
     }
 
-    // B. ÖNCE BAN KONTROLÜ YAP 🛡️
-    // Veritabanına bak, bu adam banlı mı?
-    const existingUser = await prisma.user.findUnique({
-      where: { id: user.id }
-    });
-
-    if (existingUser?.isBanned) {
-      // Eğer banlıysa işlemi burada bitir, hata fırlat.
-      return NextResponse.json({ error: 'Hesabınız yasaklanmıştır. İşlem yapamazsınız.' }, { status: 403 });
-    }
-
-    // C. Verileri al
     const body = await request.json();
-    const { content, guideId } = body;
+    const content = typeof body?.content === "string" ? body.content.trim() : "";
+    const guideId = typeof body?.guideId === "string" ? body.guideId.trim() : "";
 
-    const trimmedContent = typeof content === 'string' ? content.trim() : '';
-    const trimmedGuideId = typeof guideId === 'string' ? guideId.trim() : '';
-
-    if (!trimmedContent || !trimmedGuideId) {
-      return NextResponse.json({ error: 'İçerik eksik' }, { status: 400 });
+    if (!content || !guideId) {
+      return NextResponse.json({ error: "Icerik eksik" }, { status: 400 });
+    }
+    if (content.length > 1000) {
+      return NextResponse.json({ error: "Yorum cok uzun (maksimum 1000 karakter)." }, { status: 400 });
     }
 
-    if (trimmedContent.length > 1000) {
-      return NextResponse.json({ error: 'Yorum çok uzun (maksimum 1000 karakter).' }, { status: 400 });
+    const dbUser = await syncUserFromClerk(user);
+    if (dbUser.isBanned) {
+      return NextResponse.json(
+        { error: "Hesabiniz yasaklanmistir. Islem yapamazsiniz." },
+        { status: 403 },
+      );
     }
 
-    // D. KULLANICIYI GARANTİYE AL (Upsert)
-    // Banlı değilse, bilgilerini güncelle veya oluştur
-    await prisma.user.upsert({
-      where: { id: user.id },
-      update: {
-        email: user.emailAddresses[0]?.emailAddress,
-        username: user.username || "Oyuncu",
-        firstName: user.firstName,
-        lastName: user.lastName,
-        imageUrl: user.imageUrl,
-      },
-      create: {
-        id: user.id,
-        email: user.emailAddresses[0]?.emailAddress,
-        username: user.username || "Oyuncu",
-        firstName: user.firstName,
-        lastName: user.lastName,
-        imageUrl: user.imageUrl,
-        currentPoints: 0,
-        // isBanned varsayılan olarak false gelir
+    const recentCommentCount = await prisma.comment.count({
+      where: {
+        userId: user.id,
+        createdAt: { gte: new Date(Date.now() - COMMENT_RATE_WINDOW_MS) },
       },
     });
 
-    // E. YORUMU OLUŞTUR
-    const isAdmin = user.id === "user_38IQNX84WzWPGgn1wdzcOWogLaN"; // Senin ID'n (İstersen burayı kullan)
+    if (recentCommentCount >= COMMENT_RATE_MAX) {
+      return NextResponse.json(
+        { error: "Cok hizli yorum atiyorsun. Lutfen biraz bekleyip tekrar dene." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.floor(COMMENT_RATE_WINDOW_MS / 1000)) },
+        },
+      );
+    }
+
+    const role = await resolveStaffRole(user.id);
+    const isModerator = canModerateComments(role);
 
     const newComment = await prisma.comment.create({
       data: {
-        content: trimmedContent,
-        guideId: trimmedGuideId,
+        content,
+        guideId,
         userId: user.id,
-        isApproved: isAdmin ? true : false, // Adminse direkt onayla, değilse bekle
+        isApproved: isModerator,
       },
     });
 
     return NextResponse.json(newComment);
-
   } catch (error) {
-    console.error("Yorum Kayıt Hatası:", error);
-    return NextResponse.json({ error: 'Sunucu hatası: Yorum kaydedilemedi' }, { status: 500 });
+    console.error("[COMMENTS_POST_ERROR]", error);
+    return NextResponse.json({ error: "Sunucu hatasi: Yorum kaydedilemedi" }, { status: 500 });
   }
 }

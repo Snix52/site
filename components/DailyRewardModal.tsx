@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { X, Check, Lock, Gift, Zap, Timer } from 'lucide-react';
 import { SnixLogo } from './Icons'; 
+import { getNextUtcMidnight, getUtcDayKey } from '@/lib/daily-reward';
 
 interface DailyRewardProps {
   isOpen: boolean;
@@ -34,11 +35,8 @@ export default function DailyRewardModal({ isOpen, onClose, currentStreak, lastC
   useEffect(() => {
     const calculateTime = () => {
       const now = new Date();
-      const tomorrow = new Date();
-      tomorrow.setDate(now.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0); 
-
-      const diff = tomorrow.getTime() - now.getTime();
+      const nextUtcMidnight = getNextUtcMidnight(now);
+      const diff = nextUtcMidnight.getTime() - now.getTime();
       const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
       const m = Math.floor((diff / 1000 / 60) % 60);
       const s = Math.floor((diff / 1000) % 60);
@@ -55,8 +53,8 @@ export default function DailyRewardModal({ isOpen, onClose, currentStreak, lastC
 
   if (!isOpen) return null;
 
-  const today = new Date().toDateString();
-  const realRewardAvailable = lastClaimDate !== today;
+  const today = getUtcDayKey(new Date());
+  const realRewardAvailable = !today || lastClaimDate !== today;
 
   // 1. NORMAL HESAPLAMA (Anlık Veriye Göre)
   let calculatedDay = realRewardAvailable ? currentStreak + 1 : currentStreak;

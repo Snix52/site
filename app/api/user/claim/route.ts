@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { getUtcDayDiff, getUtcDayKey } from "@/lib/daily-reward";
 
 export async function POST() {
   try {
@@ -25,22 +26,16 @@ export async function POST() {
       }
 
       const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayKey = getUtcDayKey(now);
+      const lastClaimKey = getUtcDayKey(dbUser.lastClaimDate);
 
-      let lastClaimDateOnly: Date | null = null;
-      if (dbUser.lastClaimDate) {
-        const d = new Date(dbUser.lastClaimDate);
-        lastClaimDateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      }
-
-      if (lastClaimDateOnly && lastClaimDateOnly.getTime() === today.getTime()) {
+      if (todayKey && lastClaimKey && lastClaimKey === todayKey) {
         throw new Error("ALREADY_CLAIMED");
       }
 
       let newStreak = 1;
-      if (lastClaimDateOnly) {
-        const diffTime = Math.abs(today.getTime() - lastClaimDateOnly.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (dbUser.lastClaimDate) {
+        const diffDays = getUtcDayDiff(dbUser.lastClaimDate, now);
         if (diffDays === 1) {
           newStreak = (dbUser.streak || 0) + 1;
         }

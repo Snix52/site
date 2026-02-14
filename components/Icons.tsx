@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface IconProps extends React.SVGProps<SVGSVGElement> {}
+type IconProps = React.SVGProps<SVGSVGElement>;
 
 // --- SNIX LOGO (Animasyon Sınıfları Ekli) ---
 export const SnixLogo = ({ className, ...props }: IconProps) => (

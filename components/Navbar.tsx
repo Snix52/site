@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { SnixLogo } from '@/components/Icons'; 
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
@@ -8,47 +8,50 @@ import { ShieldAlert, User, ShoppingBag } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import SpBadge from './SpBadge';
 import DailyRewardModal from './DailyRewardModal';
+import { canAccessAdminPanel, resolveRoleWithOwner, type StaffRole } from '@/lib/admin-auth';
+import { getUtcDayKey } from '@/lib/daily-reward';
 
 export default function Navbar() {
   const { user, isSignedIn, isLoaded } = useUser();
   const [points, setPoints] = useState(0);
   const [showRewardAnimation, setShowRewardAnimation] = useState(false);
+  const [staffRole, setStaffRole] = useState<StaffRole>("USER");
   
   // Günlük Ödül State'leri
   const [isDailyModalOpen, setIsDailyModalOpen] = useState(false);
   const [streak, setStreak] = useState(0); 
   const [lastClaim, setLastClaim] = useState<string | null>(null);
 
-  const ADMIN_ID = "user_38IQNX84WzWPGgn1wdzcOWogLaN";
-  const isAdmin = user?.id === ADMIN_ID;
+  const computedRole = isLoaded ? resolveRoleWithOwner(user?.id, "USER") : "USER";
+  const isAdmin = canAccessAdminPanel(staffRole);
 
   // YARDIMCI: Tarih formatını standartlaştırır
-  const normalizeDate = (dateString: string | Date | null) => {
-    if (!dateString) return null;
-    return new Date(dateString).toDateString();
-  };
-
-  const today = new Date().toDateString();
-  const isRewardAvailable = lastClaim !== today;
+  const today = getUtcDayKey(new Date());
+  const isRewardAvailable = !today || lastClaim !== today;
 
   // 🔄 VERİ GÜNCELLEME FONKSİYONU (Dışarıdan çağrılabilir hale getirdik)
-  const syncUser = async () => {
+  const syncUser = useCallback(async () => {
     if (!isSignedIn) return;
     try {
       const res = await fetch('/api/user/sync', { method: 'POST' });
       const data = await res.json();
       
       if (data.points !== undefined) setPoints(data.points);
-      if (data.rewardGiven) {
-        setShowRewardAnimation(true);
-        setTimeout(() => setShowRewardAnimation(false), 5000);
+      if (typeof data.staffRole === "string") {
+        setStaffRole(data.staffRole as StaffRole);
+      } else {
+        setStaffRole(computedRole);
       }
       if (data.streak !== undefined) setStreak(data.streak);
-      if (data.lastClaimDate) setLastClaim(normalizeDate(data.lastClaimDate));
+      if (data.lastClaimDate) {
+        setLastClaim(getUtcDayKey(data.lastClaimDate));
+      } else {
+        setLastClaim(null);
+      }
     } catch (err) {
       console.error("Puan servisi hatası:", err);
     }
-  };
+  }, [isSignedIn, computedRole]);
 
   // 1. VERİTABANI SENKRONİZASYONU VE TELSİZ SİSTEMİ 📻
   useEffect(() => {
@@ -59,7 +62,7 @@ export default function Navbar() {
 
     // 👂 Sinyal Dinleyici: "user_updated" olayını bekle
     const handleUpdateSignal = () => {
-        console.log("📻 Navbar: Güncelleme sinyali alındı!");
+
         syncUser();
     };
 
@@ -69,21 +72,26 @@ export default function Navbar() {
     return () => {
         window.removeEventListener('user_updated', handleUpdateSignal);
     };
-  }, [isSignedIn, isLoaded]);
+  }, [isSignedIn, isLoaded, syncUser]);
+
+  useEffect(() => {
+    setStaffRole(computedRole);
+  }, [computedRole]);
 
   // 2. ÖDÜL ALMA FONKSİYONU
   const handleDailyClaim = async () => {
     try {
-      setLastClaim(today); 
       const res = await fetch('/api/user/claim', { method: 'POST' });
       
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}));
-        if (res.status === 400) return;
+        if (res.status === 400) {
+          await syncUser();
+          return;
+        }
         if (payload?.message) {
           alert(payload.message);
         }
-        setLastClaim(null); 
         return;
       }
 
@@ -92,7 +100,7 @@ export default function Navbar() {
       if (data.success) {
         setPoints(data.points);
         setStreak(data.streak);
-        setLastClaim(normalizeDate(data.lastClaimDate));
+        setLastClaim(getUtcDayKey(data.lastClaimDate));
         setShowRewardAnimation(true);
         setTimeout(() => setShowRewardAnimation(false), 5000);
         
@@ -101,7 +109,6 @@ export default function Navbar() {
       }
     } catch (error) {
       console.error("Bağlantı hatası:", error);
-      setLastClaim(null);
     }
   };
 
@@ -127,6 +134,7 @@ export default function Navbar() {
             <Link href="/" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Ana Sayfa</Link>
             <Link href="/hakkimizda" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Hakkımızda</Link>
             <Link href="/rehberler" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Rehberler</Link>
+            <Link href="/takim-bul" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Takım Bul</Link>
             
             {isAdmin && (
               <Link href="/admin" className="flex items-center gap-2 text-[10px] font-black text-red-500 hover:text-white hover:bg-red-600 transition-all uppercase tracking-[0.2em] border border-red-500/30 px-3 py-1.5 rounded bg-red-500/5">
@@ -199,3 +207,4 @@ export default function Navbar() {
     </>
   );
 }
+

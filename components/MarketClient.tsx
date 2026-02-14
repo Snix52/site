@@ -44,7 +44,7 @@ export default function MarketClient({ user }: { user: UserData }) {
       window.dispatchEvent(new Event('user_updated'));
 
       router.refresh();
-    } catch (error) {
+    } catch {
       alert("Bir hata oluştu.");
     } finally {
       setBuyingId(null);

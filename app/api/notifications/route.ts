@@ -15,7 +15,7 @@ export async function GET() {
     });
 
     return NextResponse.json(notifications);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Hata' }, { status: 500 });
   }
 }
@@ -32,7 +32,7 @@ export async function PUT() {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Hata' }, { status: 500 });
   }
 }

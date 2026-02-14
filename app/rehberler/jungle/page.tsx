@@ -17,14 +17,38 @@ const Card = ({ children, className = "" }: { children: React.ReactNode, classNa
     </div>
 );
 
-const SectionTitle = ({ icon: Icon, title }: { icon: any, title: string }) => (
+type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+
+type ComparisonItemProps = {
+  oldMeta: string;
+  oldReason: string;
+  newMeta: string;
+  newReason: string;
+};
+
+type GameplayItemProps = {
+  type: "do" | "dont";
+  title: string;
+  summary: string;
+  detail: string;
+};
+
+type ChampionCardProps = {
+  title: string;
+  examples: string;
+  logic: string;
+  reason: string;
+  isRecommended: boolean;
+};
+
+const SectionTitle = ({ icon: Icon, title }: { icon: IconComponent; title: string }) => (
     <div className="flex items-center gap-3 mb-8 border-b border-emerald-900/30 pb-4">
         <Icon className="w-8 h-8 text-emerald-400" />
         <h2 className="text-3xl font-bold text-white font-brand uppercase">{title}</h2>
     </div>
 );
 
-const ComparisonItem = ({ oldMeta, oldReason, newMeta, newReason }: any) => {
+const ComparisonItem = ({ oldMeta, oldReason, newMeta, newReason }: ComparisonItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
     return (
         <div className="bg-[#0f192b] border border-white/5 rounded-xl overflow-hidden mb-4 transition-all duration-300 hover:border-emerald-500/30">
@@ -62,7 +86,7 @@ const ComparisonItem = ({ oldMeta, oldReason, newMeta, newReason }: any) => {
     );
 };
 
-const GameplayItem = ({ type, title, summary, detail }: any) => {
+const GameplayItem = ({ type, title, summary, detail }: GameplayItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const isDo = type === 'do';
     return (
@@ -97,7 +121,7 @@ const GameplayItem = ({ type, title, summary, detail }: any) => {
     );
 };
 
-const ChampionCard = ({ title, examples, logic, reason, isRecommended }: any) => {
+const ChampionCard = ({ title, examples, logic, reason, isRecommended }: ChampionCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
     return (
        <div className={`bg-[#0f192b] border rounded-xl mb-4 overflow-hidden transition-all duration-300 ${isRecommended ? 'border-emerald-500/30 hover:border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.05)]' : 'border-red-500/30 hover:border-red-500'}`}>

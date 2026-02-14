@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  Sword, Shield, Target, Zap, Edit2, Save, X, User,
-  Trophy, Hash, Gamepad2, Map, Loader2, ShoppingBag, Check
+  Sword, Target, Zap, Edit2, Save, X, User,
+  Trophy, Hash, Gamepad2, Map, ShoppingBag, Check
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -54,7 +54,7 @@ export default function ProfileClient({ user }: { user: UserData }) {
         const data = await response.json();
         const names = Object.keys(data.data).sort(); 
         setChampionList(names);
-      } catch (error) {
+      } catch {
         setChampionList(["Ahri", "Yasuo", "Zed"]); 
       } finally {
         setLoadingChamps(false);
@@ -82,7 +82,7 @@ export default function ProfileClient({ user }: { user: UserData }) {
       if (!res.ok) throw new Error("Hata");
       setIsEditing(false);
       router.refresh(); 
-    } catch (error) {
+    } catch {
       alert("Hata oluştu");
     } finally {
       setLoading(false);

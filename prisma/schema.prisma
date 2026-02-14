@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum StaffRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
 // 1. KULLANICI TABLOSU
 model User {
   id        String    @id // Clerk ID
@@ -15,6 +21,7 @@ model User {
   firstName String?
   lastName  String?
   imageUrl  String?
+  staffRole StaffRole @default(USER)
 
   // Puan Sistemi
   currentPoints Int @default(0)
@@ -42,9 +49,13 @@ model User {
   updatedAt     DateTime @updatedAt
 
   // İLİŞKİLER
-  comments      Comment[]
-  transactions  PointTransaction[]
-  notifications Notification[]
+  comments         Comment[]
+  transactions     PointTransaction[]
+  notifications    Notification[]
+  teamPosts        TeamPost[]
+  teamApplications TeamApplication[] @relation("TeamApplicant")
+  adminActionsPerformed AdminActionLog[] @relation("AdminActor")
+  adminActionsTargeted  AdminActionLog[] @relation("AdminTarget")
 }
 
 // 2. YORUM TABLOSU
@@ -85,4 +96,64 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id])
    
   createdAt DateTime @default(now())
+}
+
+model TeamPost {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  rolesNeeded String[]
+  rankRange   String   @default("Any")
+  server      String   @default("TR")
+  maxPlayers  Int      @default(5)
+  isActive    Boolean  @default(true)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications TeamApplication[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, createdAt])
+  @@index([userId, isActive])
+}
+
+model TeamApplication {
+  id            String   @id @default(cuid())
+  teamPostId    String
+  teamPost      TeamPost @relation(fields: [teamPostId], references: [id], onDelete: Cascade)
+
+  applicantId   String
+  applicant     User     @relation("TeamApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+
+  desiredRole   String
+  playerInfo    String
+  discord       String
+  status        String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([teamPostId, applicantId])
+  @@index([teamPostId, status])
+  @@index([applicantId, status])
+}
+
+model AdminActionLog {
+  id              String   @id @default(cuid())
+  actorId         String
+  actorRole       String
+  action          String
+  targetUserId    String?
+  targetCommentId String?
+  details         Json?
+  createdAt       DateTime @default(now())
+
+  actor           User     @relation("AdminActor", fields: [actorId], references: [id], onDelete: Cascade)
+  targetUser      User?    @relation("AdminTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([targetUserId, createdAt])
 }
