@@ -73,11 +73,11 @@ const ComparisonItem = ({ oldMeta, oldReason, newMeta, newReason }: ComparisonIt
             {isOpen && (
                 <div className="grid grid-cols-1 md:grid-cols-2 border-t border-white/5 bg-black/40 animate-fade-in text-[13px] leading-relaxed">
                     <div className="p-5 border-r border-white/5 text-gray-400 italic">
-                        <strong className="text-red-400 not-italic block mb-2 uppercase font-brand">❌ Hata:</strong>
+                        <strong className="text-red-400 not-italic block mb-2 uppercase font-brand">Hata:</strong>
                         {oldReason}
                     </div>
                     <div className="p-5 text-gray-300">
-                        <strong className="text-emerald-400 block mb-2 uppercase font-brand">✅ Doğrusu:</strong>
+                        <strong className="text-emerald-400 block mb-2 uppercase font-brand">Doğrusu:</strong>
                         {newReason}
                     </div>
                 </div>
@@ -187,7 +187,7 @@ export default function JungleGuide() {
                 </div>
 
                 {/* Sekmeler */}
-{/* ⚡ sticky ve top-4 kaldırıldı, yerine sadece alt tarafa boşluk (mb-8) eklendi */}
+{/* sticky ve top-4 kaldırıldı, yerine sadece alt tarafa boşluk (mb-8) eklendi */}
 <div className="flex justify-center mb-8 relative z-10">
     <div className="inline-flex flex-wrap gap-1 bg-[#050A14]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-2xl">
         {[
@@ -401,3 +401,4 @@ export default function JungleGuide() {
         </div>
     );
 }
+

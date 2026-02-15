@@ -20,6 +20,26 @@ enum FriendRequestStatus {
   CANCELED
 }
 
+enum ProfileVoteValue {
+  LIKE
+  DISLIKE
+}
+
+enum ProfileReportReason {
+  TOXIC_BEHAVIOR
+  HARASSMENT
+  CHEATING
+  SPAM
+  FAKE_PROFILE
+  OTHER
+}
+
+enum ProfileReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
 // 1. KULLANICI TABLOSU
 model User {
   id        String    @id // Clerk ID
@@ -66,6 +86,11 @@ model User {
   receivedFriendRequests FriendRequest[]     @relation("FriendRequestRecipient")
   friendshipsAsUserA     Friendship[]        @relation("FriendshipUserA")
   friendshipsAsUserB     Friendship[]        @relation("FriendshipUserB")
+  profileVotesGiven      ProfileVote[]       @relation("ProfileVoteVoter")
+  profileVotesReceived   ProfileVote[]       @relation("ProfileVoteTarget")
+  profileReportsSent     ProfileReport[]     @relation("ProfileReportReporter")
+  profileReportsReceived ProfileReport[]     @relation("ProfileReportTarget")
+  profileReportsReviewed ProfileReport[]     @relation("ProfileReportReviewer")
   globalChatMessages     GlobalChatMessage[]
   adminActionsPerformed AdminActionLog[] @relation("AdminActor")
   adminActionsTargeted  AdminActionLog[] @relation("AdminTarget")
@@ -208,6 +233,43 @@ model GlobalChatMessage {
 
   @@index([createdAt])
   @@index([senderId, createdAt])
+}
+
+model ProfileVote {
+  id           String           @id @default(cuid())
+  voterId      String
+  targetUserId String
+  value        ProfileVoteValue
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  voter        User             @relation("ProfileVoteVoter", fields: [voterId], references: [id], onDelete: Cascade)
+  targetUser   User             @relation("ProfileVoteTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@unique([voterId, targetUserId])
+  @@index([targetUserId, value])
+  @@index([voterId, createdAt])
+}
+
+model ProfileReport {
+  id           String              @id @default(cuid())
+  reporterId   String
+  targetUserId String
+  reason       ProfileReportReason
+  details      String              @db.Text
+  status       ProfileReportStatus @default(OPEN)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  reporter     User                @relation("ProfileReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetUser   User                @relation("ProfileReportTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  reviewedBy   User?               @relation("ProfileReportReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([targetUserId, status, createdAt])
+  @@index([reporterId, status, createdAt])
 }
 
 model AdminActionLog {

@@ -1,13 +1,13 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { Check, MessageCircle, Plus, Radio, Target, X } from "lucide-react";
 import TeamChatModal from "@/components/TeamChatModal";
+import { useSystemToast } from "@/components/SystemToastProvider";
 
 const ROLES = ["TOP", "JUNGLE", "MID", "ADC", "SUPP", "FILL"] as const;
 type Role = (typeof ROLES)[number];
-type ToastTone = "success" | "error" | "info";
 
 type TeamPost = {
   id: string;
@@ -48,12 +48,6 @@ type TeamApplication = {
   };
 };
 
-type ToastItem = {
-  id: number;
-  tone: ToastTone;
-  message: string;
-};
-
 const emptyPostForm = {
   title: "",
   description: "",
@@ -77,12 +71,6 @@ const roleStyle: Record<string, string> = {
   FILL: "bg-slate-500/20 border-slate-300/40 text-slate-200",
 };
 
-const toastToneStyle: Record<ToastTone, string> = {
-  success: "border-emerald-400/40 bg-emerald-500/15 text-emerald-100",
-  error: "border-red-400/40 bg-red-500/15 text-red-100",
-  info: "border-cyan-400/40 bg-cyan-500/15 text-cyan-100",
-};
-
 function toErrorPayload(payload: unknown) {
   if (!payload || typeof payload !== "object") return null;
   return payload as { error?: unknown; details?: unknown };
@@ -97,12 +85,12 @@ function buildErrorMessage(payload: unknown, fallback: string) {
 
 export default function TeamFinderClient() {
   const { isSignedIn, user } = useUser();
+  const { pushToast } = useSystemToast();
   const [posts, setPosts] = useState<TeamPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingPost, setSendingPost] = useState(false);
   const [sendingApply, setSendingApply] = useState(false);
   const [updatingAppId, setUpdatingAppId] = useState<string | null>(null);
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const [filterRole, setFilterRole] = useState<string>("ALL");
   const [postForm, setPostForm] = useState(emptyPostForm);
@@ -128,12 +116,6 @@ export default function TeamFinderClient() {
   const ownerMaxPlayers = ownerAppsPost?.maxPlayers ?? 5;
   const ownerFilledSlots = Math.min(ownerMaxPlayers, 1 + acceptedOwnerApps.length);
   const ownerFillPercent = Math.min(100, Math.round((ownerFilledSlots / ownerMaxPlayers) * 100));
-
-  const pushToast = (message: string, tone: ToastTone = "info") => {
-    const id = Date.now() + Math.floor(Math.random() * 10000);
-    setToasts((prev) => [...prev, { id, tone, message }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4200);
-  };
 
   const fetchPosts = async (role = filterRole) => {
     setLoading(true);
@@ -285,16 +267,6 @@ export default function TeamFinderClient() {
         <div className="absolute top-28 -right-24 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
       </div>
 
-      <div className="fixed top-24 right-4 z-[260] w-[min(360px,calc(100%-2rem))] space-y-2">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`rounded-xl border px-3 py-2 text-sm shadow-lg backdrop-blur ${toastToneStyle[toast.tone]}`}
-          >
-            {toast.message}
-          </div>
-        ))}
-      </div>
       <div className="max-w-7xl mx-auto pt-32 relative z-10">
         <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0A1120]/95 via-[#0B1628]/95 to-[#070D19]/95 p-8 md:p-10 mb-8 shadow-[0_0_40px_rgba(0,255,255,0.08)]">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
@@ -770,4 +742,5 @@ export default function TeamFinderClient() {
     </div>
   );
 }
+
 

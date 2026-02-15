@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { Prisma } from "@prisma/client";
 
@@ -293,4 +293,5 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Başvuru güncellenemedi." }, { status: 500 });
   }
 }
+
 

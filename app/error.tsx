@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { ShieldAlert } from "lucide-react";
@@ -35,3 +35,4 @@ export default function GlobalError({
     </div>
   );
 }
+

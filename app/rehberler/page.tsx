@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from 'next/link';
 // Navbar'ı sildik, çünkü layout'tan geliyor.
@@ -57,7 +57,7 @@ export default function GuidesHub() {
                 </div>
             </div>
 
-            {/* 3. KART: JUNGLE (GERİ GELDİ! 🌲) */}
+            {/* 3. KART: JUNGLE (GERİ GELDİ! ) */}
             <Link href="/rehberler/jungle" className="group block h-full">
                 <div className="bg-[#0A1120] border border-white/5 rounded-2xl overflow-hidden hover:border-emerald-400 transition-all duration-300 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:-translate-y-2 h-full flex flex-col">
                     <div className="h-48 bg-gradient-to-br from-emerald-900/20 to-green-900/20 relative p-6 flex flex-col justify-between border-b border-white/5 group-hover:from-emerald-900/40 transition-colors">

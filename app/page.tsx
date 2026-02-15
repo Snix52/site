@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { SnixLogo, Play, Brain, Target, Zap, CheckCircle, XCircle, ChevronDown } from '@/components/Icons'; 
 
 export default function Home() {
-  // ⚡ Kaydırma noktası için referans oluşturduk
+  // Kaydırma noktası için referans oluşturduk
   const scrollTargetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function Home() {
           </button>
         </div>
 
-        {/* ⚡ KAYDIRMA İŞARETİ VE TARGET REF */}
+        {/* KAYDIRMA İŞARETİ VE TARGET REF */}
         <div 
           ref={scrollTargetRef} 
           className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce opacity-70 cursor-pointer"
@@ -159,7 +159,7 @@ export default function Home() {
 
       <footer className="py-8 border-t border-white/5 bg-black text-center relative z-20">
         <p className="text-slate-600 text-xs font-bold uppercase tracking-widest">
-            © 2026 SNIX.GG • BY MASTER TIER PLAYER FOR PLAYERS
+            Â© 2026 SNIX.GG ⬢ BY MASTER TIER PLAYER FOR PLAYERS
         </p>
       </footer>
 

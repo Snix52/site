@@ -1,12 +1,12 @@
-import React from 'react';
+﻿import React from 'react';
 
 interface AvatarFrameProps {
   src: string;
   frameType: string;
-  className?: string; // 👈 YENİ: Dışarıdan boyut alabiliyor
+  className?: string; // YENİ: Dışarıdan boyut alabiliyor
 }
 
-// ⬇️ LOCAL DOSYALAR
+// LOCAL DOSYALAR
 export const FRAMES: Record<string, string> = {
   DARKIN: "/frames/darkin.png",
   IONIA: "/frames/ionia.png",
@@ -19,7 +19,7 @@ export const FRAMES: Record<string, string> = {
 };
 
 // ----------------------------------------------------------------------
-// 🛠️ BEDEN AYARLARI (Yüzdelik olduğu için her boyutta çalışır)
+//  BEDEN AYARLARI (Yüzdelik olduğu için her boyutta çalışır)
 // ----------------------------------------------------------------------
 const FRAME_SIZES: Record<string, string> = {
   DARKIN: "70%",
@@ -51,10 +51,10 @@ export default function AvatarFrame({ src, frameType, className = "w-44 h-44" }:
   };
 
   return (
-    // ⬇️ DÜZELTME: className dışarıdan geliyor, varsayılanı w-44 h-44
+    // DÜZELTME: className dışarıdan geliyor, varsayılanı w-44 h-44
     <div className={`relative flex items-center justify-center shrink-0 ${className}`}>
       
-      {/* 💥 KATMAN 0: ARKA PLAN EFEKTLERİ (AURA) - ARTIK YÜZDELİK! */}
+      {/* KATMAN 0: ARKA PLAN EFEKTLERİ (AURA) - ARTIK YÜZDELİK! */}
       <div className="absolute inset-0 flex items-center justify-center z-[-1]">
         
         {/* DARKIN */}
@@ -94,7 +94,7 @@ export default function AvatarFrame({ src, frameType, className = "w-44 h-44" }:
             <div className="w-[80%] h-[80%] bg-purple-700/50 rounded-full blur-2xl animate-[pulse_2s_infinite]"></div>
         )}
 
-        {/* 🏆 CHALLENGER */}
+        {/* CHALLENGER */}
         {frameType === "CHALLENGER" && (
             <>
                 <div className="absolute w-[80%] h-[80%] bg-blue-600/50 rounded-full blur-2xl animate-pulse"></div>
@@ -109,7 +109,7 @@ export default function AvatarFrame({ src, frameType, className = "w-44 h-44" }:
       </div>
 
 
-      {/* 🚀 KATMAN 1: GRUP (Resim + Çerçeve) */}
+      {/* KATMAN 1: GRUP (Resim + Çerçeve) */}
       <div className={`relative w-full h-full flex items-center justify-center ${getGroupAnimation()}`}>
         
         {/* Profil Resmi */}
@@ -129,7 +129,7 @@ export default function AvatarFrame({ src, frameType, className = "w-44 h-44" }:
       </div>
 
 
-      {/* ✨ KATMAN 2: ÖN PLAN EFEKTLERİ */}
+      {/* KATMAN 2: ÖN PLAN EFEKTLERİ */}
       <div className="absolute inset-0 z-20 pointer-events-none rounded-full overflow-hidden">
          {frameType === "HEXTECH" && <div className="absolute inset-0 bg-blue-400/10 mix-blend-overlay animate-pulse"></div>}
          {frameType === "DARKIN" && <div className="absolute inset-0 bg-red-500/10 mix-blend-overlay animate-pulse"></div>}
@@ -139,7 +139,7 @@ export default function AvatarFrame({ src, frameType, className = "w-44 h-44" }:
       </div>
 
 
-      {/* 🪄 CSS KEYFRAMES */}
+      {/* CSS KEYFRAMES */}
       <style jsx global>{`
         /* Darkin */
         .animate-darkin { animation: darkinMove 4s ease-in-out infinite; }
@@ -176,7 +176,7 @@ export default function AvatarFrame({ src, frameType, className = "w-44 h-44" }:
             50% { transform: scale(1.04); filter: hue-rotate(20deg) brightness(1.1); }
         }
 
-        /* 🏆 Challenger Animation */
+        /* Challenger Animation */
         .animate-challenger { animation: challengerGlow 3s ease-in-out infinite; }
         @keyframes challengerGlow {
             0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(37,99,235,0.6)); }

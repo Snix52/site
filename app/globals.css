@@ -162,3 +162,100 @@ a[href*="clerk.dev"] {
   backface-visibility: hidden;
   perspective: 1000px;
 }
+
+/* Chat avatar frame animations (single global definition for performance) */
+.chat-frame-darkin {
+  animation: chatFrameDarkin 4s ease-in-out infinite;
+}
+
+@keyframes chatFrameDarkin {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.03);
+    filter: brightness(1.3) drop-shadow(0 0 10px rgba(220, 38, 38, 0.5));
+  }
+}
+
+.chat-frame-ionia {
+  animation: chatFrameIonia 6s ease-in-out infinite;
+}
+
+@keyframes chatFrameIonia {
+  0%,
+  100% {
+    transform: translateY(0);
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px);
+    filter: hue-rotate(10deg);
+  }
+}
+
+.chat-frame-hextech {
+  animation: chatFrameHextech 1s steps(2) infinite alternate;
+}
+
+@keyframes chatFrameHextech {
+  from {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  to {
+    transform: scale(1.01);
+    filter: brightness(1.2) drop-shadow(0 0 5px rgba(59, 130, 246, 0.8));
+  }
+}
+
+.chat-frame-shadow {
+  animation: chatFrameShadow 5s ease-in-out infinite;
+}
+
+@keyframes chatFrameShadow {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(-3px) scale(1.02);
+    opacity: 1;
+    filter: drop-shadow(0 0 10px #10b981);
+  }
+}
+
+.chat-frame-void {
+  animation: chatFrameVoid 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes chatFrameVoid {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: scale(1.04);
+    filter: hue-rotate(20deg) brightness(1.1);
+  }
+}
+
+.chat-frame-challenger {
+  animation: chatFrameChallenger 3s ease-in-out infinite;
+}
+
+@keyframes chatFrameChallenger {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px rgba(37, 99, 235, 0.6));
+  }
+  50% {
+    transform: scale(1.02);
+    filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.9)) brightness(1.2);
+  }
+}

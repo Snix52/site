@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 
 import { getPusherServer, isPusherConfigured } from "@/lib/pusher-server";
@@ -64,3 +64,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Kanal doğrulama başarısız." }, { status: 500 });
   }
 }
+

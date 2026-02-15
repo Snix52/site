@@ -2,6 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  AlertTriangle,
   Ban,
   BellRing,
   CheckCircle,
@@ -59,6 +60,15 @@ function getSingleParam(value: string | string[] | undefined) {
   return value || "";
 }
 
+function reportReasonLabel(reason: string) {
+  if (reason === "TOXIC_BEHAVIOR") return "Toksik Davranis";
+  if (reason === "HARASSMENT") return "Hakaret / Taciz";
+  if (reason === "CHEATING") return "Hile / Script";
+  if (reason === "SPAM") return "Spam / Flood";
+  if (reason === "FAKE_PROFILE") return "Sahte Profil";
+  return "Diger";
+}
+
 function parsePage(raw: string, fallback = 1) {
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed < 1) return fallback;
@@ -108,7 +118,7 @@ export default async function AdminDashboard({
       }
     : {};
 
-  const [totalUsers, totalPendingComments, recentAuditLogs, recentTransactions, rawActiveTeamPosts] = await Promise.all([
+  const [totalUsers, totalPendingComments, recentAuditLogs, recentTransactions, rawActiveTeamPosts, openProfileReports] = await Promise.all([
     prisma.user.count({ where: userWhere }),
     prisma.comment.count({ where: { isApproved: false } }),
     canViewAuditLogs(viewerRole) ? getRecentAdminAuditLogs(30) : Promise.resolve([]),
@@ -138,6 +148,31 @@ export default async function AdminDashboard({
             username: true,
             firstName: true,
             lastName: true,
+          },
+        },
+      },
+    }),
+    prisma.profileReport.findMany({
+      where: { status: "OPEN" },
+      orderBy: { createdAt: "desc" },
+      take: 60,
+      include: {
+        reporter: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+            imageUrl: true,
+          },
+        },
+        targetUser: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+            imageUrl: true,
           },
         },
       },
@@ -529,6 +564,53 @@ export default async function AdminDashboard({
           >
             Sonraki Yorumlar
           </Link>
+        </div>
+
+        <div className="bg-[#0A1120] border border-white/10 rounded-2xl overflow-hidden mb-12">
+          <div className="p-6 border-b border-white/5 flex items-center gap-3">
+            <AlertTriangle className="text-red-300" />
+            <h2 className="text-xl font-bold text-white uppercase tracking-wider">Profil Sikayetleri</h2>
+          </div>
+
+          {openProfileReports.length === 0 ? (
+            <div className="p-6 text-sm text-slate-400">Acik profil sikayeti yok.</div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {openProfileReports.map((report) => (
+                <div key={report.id} className="px-6 py-4 flex flex-col lg:flex-row gap-4 lg:items-start lg:justify-between">
+                  <div className="space-y-2 max-w-3xl">
+                    <p className="text-sm text-slate-300">
+                      <span className="text-red-300 font-semibold">Raporlayan:</span>{" "}
+                      {toDisplayName(report.reporter)} ({report.reporter.id})
+                    </p>
+                    <p className="text-sm text-slate-300">
+                      <span className="text-cyan-300 font-semibold">Hedef:</span>{" "}
+                      {toDisplayName(report.targetUser)} ({report.targetUser.id})
+                    </p>
+                    <p className="text-xs text-amber-300 uppercase tracking-wider font-semibold">
+                      Sebep: {reportReasonLabel(report.reason)}
+                    </p>
+                    <p className="text-sm text-slate-200 bg-black/25 border border-white/10 rounded-lg px-3 py-2 whitespace-pre-wrap">
+                      {report.details}
+                    </p>
+                    <p className="text-xs text-slate-500">{new Date(report.createdAt).toLocaleString("tr-TR")}</p>
+                  </div>
+
+                  {canModerate ? (
+                    <form action="/api/admin/action" method="post">
+                      <input type="hidden" name="actionType" value="RESOLVE_PROFILE_REPORT" />
+                      <input type="hidden" name="reportId" value={report.id} />
+                      <button className="px-3 py-1.5 rounded border border-emerald-400/30 bg-emerald-500/10 text-emerald-300 text-xs font-bold hover:bg-emerald-500/20">
+                        Cozuldu Olarak Isaretle
+                      </button>
+                    </form>
+                  ) : (
+                    <span className="text-xs text-slate-500">Yetki yok</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="bg-[#0A1120] border border-white/10 rounded-2xl overflow-hidden mb-12">

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from 'react'; // useRef ekledik
 import { Bell, CheckCircle, Info, Gift, AlertTriangle } from 'lucide-react';
@@ -19,7 +19,7 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   
-  // 🛡️ KİLİT MEKANİZMASI: Aynı anda birden fazla istek gitmesini engeller
+  // KİLİT MEKANİZMASI: Aynı anda birden fazla istek gitmesini engeller
   const isFetching = useRef(false);
   const lastFetchTime = useRef(0);
 
@@ -51,7 +51,7 @@ export default function NotificationBell() {
 
     fetchNotifications();
 
-    // ⚡ Localde kasmaması için süreyi 30 saniyeden 60 saniyeye çıkardım
+    // Localde kasmaması için süreyi 30 saniyeden 60 saniyeye çıkardım
     const interval = setInterval(fetchNotifications, 60000);
     
     return () => clearInterval(interval);
@@ -98,8 +98,7 @@ export default function NotificationBell() {
             <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
               {notifications.length === 0 ? (
                 <div className="p-10 text-center text-gray-600 text-xs font-medium italic">
-                  Henüz bir mesajın yok... 🦗
-                </div>
+                  Henüz bir mesajın yok... </div>
               ) : (
                 notifications.map((note) => (
                   <div key={note.id} className={`p-4 border-b border-white/5 flex gap-4 hover:bg-white/5 transition-colors ${!note.isRead ? 'bg-[#00FFFF]/5 border-l-2 border-l-[#00FFFF]' : ''}`}>
@@ -114,7 +113,7 @@ export default function NotificationBell() {
                       <h4 className={`text-sm truncate ${!note.isRead ? 'font-bold text-white' : 'font-medium text-gray-400'}`}>{note.title}</h4>
                       <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{note.message}</p>
                       <span className="text-[9px] text-gray-600 mt-2 font-bold block uppercase">
-                        {new Date(note.createdAt).toLocaleDateString('tr-TR')} • {new Date(note.createdAt).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
+                        {new Date(note.createdAt).toLocaleDateString('tr-TR')} ⬢ {new Date(note.createdAt).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
                       </span>
                     </div>
                   </div>

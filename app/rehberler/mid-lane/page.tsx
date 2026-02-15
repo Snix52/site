@@ -74,11 +74,11 @@ const ComparisonItem = ({ oldMeta, oldReason, newMeta, newReason }: ComparisonIt
             {isOpen && (
                 <div className="grid grid-cols-1 md:grid-cols-2 border-t border-white/5 bg-black/40 animate-fade-in text-[13px] leading-relaxed">
                     <div className="p-5 border-r border-white/5 text-gray-400 italic">
-                        <strong className="text-red-400 not-italic block mb-2 uppercase font-brand">❌ Hata:</strong>
+                        <strong className="text-red-400 not-italic block mb-2 uppercase font-brand">Hata:</strong>
                         {oldReason}
                     </div>
                     <div className="p-5 text-gray-300">
-                        <strong className="text-[#00FFFF] block mb-2 uppercase font-brand">✅ Doğrusu:</strong>
+                        <strong className="text-[#00FFFF] block mb-2 uppercase font-brand">Doğrusu:</strong>
                         {newReason}
                     </div>
                 </div>
@@ -187,7 +187,7 @@ export default function MidLaneGuide() {
                 </div>
 
                 {/* Sekmeler */}
-<div className="flex justify-center mb-12 relative z-10"> {/* ⚡ sticky ve top-4 kaldırıldı, mb-12 ile içerikle arasına boşluk verildi */}
+<div className="flex justify-center mb-12 relative z-10"> {/* sticky ve top-4 kaldırıldı, mb-12 ile içerikle arasına boşluk verildi */}
     <div className="inline-flex flex-wrap gap-1 bg-[#050A14]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-2xl">
         {[
             { id: 'overview', label: 'GENEL BAKIŞ', icon: Info },
@@ -400,3 +400,4 @@ export default function MidLaneGuide() {
         </div>
     );
 }
+

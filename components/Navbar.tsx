@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -10,9 +10,11 @@ import SpBadge from './SpBadge';
 import DailyRewardModal from './DailyRewardModal';
 import { canAccessAdminPanel, resolveRoleWithOwner, type StaffRole } from '@/lib/admin-auth';
 import { getUtcDayKey } from '@/lib/daily-reward';
+import { useSystemToast } from "@/components/SystemToastProvider";
 
 export default function Navbar() {
   const { user, isSignedIn, isLoaded } = useUser();
+  const { pushToast } = useSystemToast();
   const [points, setPoints] = useState(0);
   const [showRewardAnimation, setShowRewardAnimation] = useState(false);
   const [staffRole, setStaffRole] = useState<StaffRole>("USER");
@@ -29,7 +31,7 @@ export default function Navbar() {
   const today = getUtcDayKey(new Date());
   const isRewardAvailable = !today || lastClaim !== today;
 
-  // 🔄 VERİ GÜNCELLEME FONKSİYONU (Dışarıdan çağrılabilir hale getirdik)
+  // VERİ GÜNCELLEME FONKSİYONU (Dışarıdan çağrılabilir hale getirdik)
   const syncUser = useCallback(async () => {
     if (!isSignedIn) return;
     try {
@@ -53,14 +55,14 @@ export default function Navbar() {
     }
   }, [isSignedIn, computedRole]);
 
-  // 1. VERİTABANI SENKRONİZASYONU VE TELSİZ SİSTEMİ 📻
+  // 1. VERİTABANI SENKRONİZASYONU VE TELSİZ SİSTEMİ
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
 
     // İlk açılışta veriyi çek
     syncUser();
 
-    // 👂 Sinyal Dinleyici: "user_updated" olayını bekle
+    // Sinyal Dinleyici: "user_updated" olayını bekle
     const handleUpdateSignal = () => {
 
         syncUser();
@@ -90,7 +92,7 @@ export default function Navbar() {
           return;
         }
         if (payload?.message) {
-          alert(payload.message);
+          pushToast(payload.message, "info");
         }
         return;
       }
@@ -104,11 +106,12 @@ export default function Navbar() {
         setShowRewardAnimation(true);
         setTimeout(() => setShowRewardAnimation(false), 5000);
         
-        // 📢 Kendimiz de sinyal yayalım (Belki başka componentler dinliyordur)
+        // Kendimiz de sinyal yayalım (Belki başka componentler dinliyordur)
         window.dispatchEvent(new Event('user_updated'));
       }
     } catch (error) {
       console.error("Bağlantı hatası:", error);
+      pushToast("Baglanti hatasi olustu.", "error");
     }
   };
 
@@ -135,7 +138,6 @@ export default function Navbar() {
             <Link href="/hakkimizda" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Hakkımızda</Link>
             <Link href="/rehberler" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Rehberler</Link>
             <Link href="/takim-bul" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Takım Bul</Link>
-            <Link href="/sosyal" className="text-[11px] font-black text-slate-400 hover:text-[#00FFFF] transition-all uppercase tracking-[0.2em]">Sosyal</Link>
 
             {isAdmin && (
               <Link href="/admin" className="flex items-center gap-2 text-[10px] font-black text-red-500 hover:text-white hover:bg-red-600 transition-all uppercase tracking-[0.2em] border border-red-500/30 px-3 py-1.5 rounded bg-red-500/5">
@@ -208,3 +210,4 @@ export default function Navbar() {
     </>
   );
 }
+

@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, Check, Loader2, ShoppingBag } from 'lucide-react';
 import AvatarFrame, { FRAMES } from './AvatarFrame'; 
-import { MARKET_PRICES } from '@/lib/market'; // 👈 MERKEZİ FİYATLAR
+import { MARKET_PRICES } from '@/lib/market'; // MERKEZİ FİYATLAR
+import { useSystemToast } from "@/components/SystemToastProvider";
 
 interface UserData {
   id: string;
@@ -15,6 +16,7 @@ interface UserData {
 
 export default function MarketClient({ user }: { user: UserData }) {
   const router = useRouter();
+  const { pushToast } = useSystemToast();
   const [currentPoints, setCurrentPoints] = useState(user.currentPoints);
   const [ownedFrames, setOwnedFrames] = useState<string[]>(user.ownedFrames || ["BASIC"]);
   const [buyingId, setBuyingId] = useState<string | null>(null);
@@ -33,7 +35,7 @@ export default function MarketClient({ user }: { user: UserData }) {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Satın alma başarısız!");
+        pushToast(data.error || "Satin alma basarisiz.", "error");
         return;
       }
 
@@ -45,7 +47,7 @@ export default function MarketClient({ user }: { user: UserData }) {
 
       router.refresh();
     } catch {
-      alert("Bir hata oluştu.");
+      pushToast("Bir hata olustu.", "error");
     } finally {
       setBuyingId(null);
     }
@@ -66,10 +68,10 @@ export default function MarketClient({ user }: { user: UserData }) {
             </p>
         </div>
 
-        {/* 💎 BAKİYE KUTUSU */}
+        {/* BAKİYE KUTUSU */}
         <div className="bg-[#00FFFF]/5 border border-[#00FFFF]/20 px-8 py-4 rounded-2xl flex items-center gap-6 shadow-[0_0_30px_rgba(0,255,255,0.1)] backdrop-blur-md group hover:border-[#00FFFF]/40 transition-all">
             
-            {/* ✨ ANIMASYONLU 3D LOGO */}
+            {/* ANIMASYONLU 3D LOGO */}
             <div className="relative w-16 h-16 shrink-0" style={{ perspective: '1200px' }}>
                 <div className="absolute inset-0 w-full h-full animate-[spin_10s_linear_infinite]">
                      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_0_10px_rgba(0,255,255,0.6)]">
@@ -123,7 +125,7 @@ export default function MarketClient({ user }: { user: UserData }) {
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
         {Object.keys(FRAMES).map((frame) => {
             const isOwned = ownedFrames.includes(frame);
-            // 🛠️ FİYAT ARTIK IMPORT EDİLEN DOSYADAN GELİYOR
+            //  FİYAT ARTIK IMPORT EDİLEN DOSYADAN GELİYOR
             const price = MARKET_PRICES[frame] || 0; 
             const canAfford = currentPoints >= price;
 
@@ -177,3 +179,4 @@ export default function MarketClient({ user }: { user: UserData }) {
     </div>
   );
 }
+

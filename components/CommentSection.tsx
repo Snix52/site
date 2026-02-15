@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useUser, SignInButton } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronDown } from "@/components/Icons";
+import { useSystemToast } from "@/components/SystemToastProvider";
 
 // YENİ VERİ YAPISI: Artık kullanıcı bilgileri 'user' objesinin içinde
 interface Comment {
@@ -19,6 +20,7 @@ interface Comment {
 
 export default function CommentSection({ guideId }: { guideId: string }) {
   const { user, isSignedIn } = useUser();
+  const { pushToast } = useSystemToast();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
@@ -61,16 +63,16 @@ export default function CommentSection({ guideId }: { guideId: string }) {
 
       if (res.ok) {
         setNewComment("");
-        alert("Yorumun başarıyla gönderildi! 🚀\nYönetici onayından sonra yayınlanacaktır.");
+        pushToast("Yorumun gonderildi. Yonetici onayindan sonra yayinlanacaktir.", "success");
         setIsOpen(false); // İstersen gönderince kapatsın veya açık kalsın
       } else {
         // HATA VARSA SÖYLE
         const errData = await res.json();
-        alert(`Hata: ${errData.error || "Yorum gönderilemedi."}`);
+        pushToast(`Hata: ${errData.error || "Yorum gonderilemedi."}`, "error");
       }
     } catch (error) {
       console.error("Hata", error);
-      alert("Bir bağlantı hatası oluştu.");
+      pushToast("Bir baglanti hatasi olustu.", "error");
     } finally {
       setSubmitting(false);
     }
@@ -115,7 +117,7 @@ export default function CommentSection({ guideId }: { guideId: string }) {
               </div>
             ) : comments.length === 0 ? (
               <div className="text-center py-8 bg-white/5 rounded-xl border border-white/5 border-dashed">
-                <p className="text-gray-400 text-sm">Henüz onaylanmış yorum yok. Sessizliği boz! 👑</p>
+                <p className="text-gray-400 text-sm">Henüz onaylanmış yorum yok. Sessizliği boz!</p>
               </div>
             ) : (
               comments.map((comment) => {
@@ -194,3 +196,4 @@ export default function CommentSection({ guideId }: { guideId: string }) {
     </div>
   );
 }
+

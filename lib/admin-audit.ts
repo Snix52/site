@@ -10,6 +10,7 @@ export type AdminAuditAction =
   | "MANAGE_POINTS"
   | "APPROVE_COMMENT"
   | "DELETE_COMMENT"
+  | "RESOLVE_PROFILE_REPORT"
   | "CLOSE_TEAM_POST";
 
 type WriteAdminAuditInput = {

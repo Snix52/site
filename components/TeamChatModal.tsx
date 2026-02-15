@@ -1,11 +1,21 @@
-"use client";
+﻿"use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { useUser } from "@clerk/nextjs";
 import { Loader2, MessageCircle, Send, Wifi, WifiOff, X } from "lucide-react";
 
+import ChatAvatar from "@/components/ChatAvatar";
+import ChatUserActionLayer, { type ChatActionMenuState } from "@/components/chat/ChatUserActionLayer";
 import { getPusherClient, isPusherClientConfigured } from "@/lib/pusher-client";
-import { getTeamupChatChannelName, TEAMUP_CHAT_EVENT } from "@/lib/teamup-chat";
+import { getTeamupChatChannelName, TEAMUP_CHAT_EVENT, TEAMUP_CHAT_HISTORY_LIMIT } from "@/lib/teamup-chat";
 
 type ToastTone = "success" | "error" | "info";
 
@@ -19,12 +29,14 @@ type TeamChatMessage = {
     username: string | null;
     imageUrl: string | null;
     mainRole: string;
+    selectedFrame?: string | null;
   };
 };
 
 type TeamChatResponse = {
   messages?: TeamChatMessage[];
   realtimeEnabled?: boolean;
+  currentUserFrame?: string | null;
   error?: string;
 };
 
@@ -42,10 +54,19 @@ function getErrorMessage(payload: unknown, fallback: string) {
   return typeof maybeError === "string" && maybeError.trim().length > 0 ? maybeError : fallback;
 }
 
+function keepLatestTeamMessages(list: TeamChatMessage[]): TeamChatMessage[] {
+  if (list.length <= TEAMUP_CHAT_HISTORY_LIMIT) return list;
+  return list.slice(-TEAMUP_CHAT_HISTORY_LIMIT);
+}
+
 function upsertMessage(list: TeamChatMessage[], incoming: TeamChatMessage): TeamChatMessage[] {
   const exists = list.some((item) => item.id === incoming.id);
-  if (exists) return list;
-  return [...list, incoming];
+  if (exists) return keepLatestTeamMessages(list);
+  return keepLatestTeamMessages([...list, incoming]);
+}
+
+function createOptimisticId() {
+  return `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export default function TeamChatModal({
@@ -62,7 +83,10 @@ export default function TeamChatModal({
   const [sending, setSending] = useState(false);
   const [realtimeEnabledByServer, setRealtimeEnabledByServer] = useState(false);
   const [mode, setMode] = useState<"realtime" | "polling">("polling");
+  const [myFrame, setMyFrame] = useState("BASIC");
+  const [chatUserMenu, setChatUserMenu] = useState<ChatActionMenuState | null>(null);
 
+  const formRef = useRef<HTMLFormElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const canUseRealtimeClient = isPusherClientConfigured();
 
@@ -80,7 +104,10 @@ export default function TeamChatModal({
         throw new Error(getErrorMessage(payload, "Sohbet yüklenemedi."));
       }
 
-      setMessages(payload.messages || []);
+      setMessages(keepLatestTeamMessages(payload.messages || []));
+      if (typeof payload.currentUserFrame === "string" && payload.currentUserFrame.trim().length > 0) {
+        setMyFrame(payload.currentUserFrame.trim().toUpperCase());
+      }
       setRealtimeEnabledByServer(Boolean(payload.realtimeEnabled));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sohbet yüklenemedi.";
@@ -127,6 +154,9 @@ export default function TeamChatModal({
     const channelName = getTeamupChatChannelName(postId);
     const channel = pusher.subscribe(channelName);
     const onMessage = (incoming: TeamChatMessage) => {
+      if (incoming.sender.id === user?.id && typeof incoming.sender.selectedFrame === "string") {
+        setMyFrame(incoming.sender.selectedFrame || "BASIC");
+      }
       setMessages((prev) => upsertMessage(prev, incoming));
     };
 
@@ -136,7 +166,7 @@ export default function TeamChatModal({
       channel.unbind(TEAMUP_CHAT_EVENT, onMessage);
       pusher.unsubscribe(channelName);
     };
-  }, [isOpen, postId, canUseRealtimeClient, realtimeEnabledByServer, fetchMessages]);
+  }, [isOpen, postId, canUseRealtimeClient, realtimeEnabledByServer, fetchMessages, user?.id]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -152,6 +182,8 @@ export default function TeamChatModal({
       setSending(false);
       setRealtimeEnabledByServer(false);
       setMode("polling");
+      setMyFrame("BASIC");
+      setChatUserMenu(null);
     }
   }, [isOpen]);
 
@@ -161,6 +193,24 @@ export default function TeamChatModal({
 
     const content = draft.trim();
     if (!content) return;
+
+    const optimisticId = createOptimisticId();
+    const optimisticMessage: TeamChatMessage = {
+      id: optimisticId,
+      teamPostId: postId,
+      content,
+      createdAt: new Date().toISOString(),
+      sender: {
+        id: user?.id ?? "me",
+        username: user?.username ?? "Sen",
+        imageUrl: user?.imageUrl ?? null,
+        mainRole: "UNSELECTED",
+        selectedFrame: myFrame,
+      },
+    };
+
+    setMessages((prev) => upsertMessage(prev, optimisticMessage));
+    setDraft("");
 
     setSending(true);
     try {
@@ -172,17 +222,32 @@ export default function TeamChatModal({
       const payload = await res.json().catch(() => ({}));
 
       if (!res.ok) {
+        setMessages((prev) => prev.filter((message) => message.id !== optimisticId));
+        setDraft(content);
         pushToast?.(getErrorMessage(payload, "Mesaj gönderilemedi."), "error");
         return;
       }
 
       if (payload?.message) {
-        setMessages((prev) => upsertMessage(prev, payload.message as TeamChatMessage));
+        const serverMessage = payload.message as TeamChatMessage;
+        if (serverMessage.sender.id === user?.id && typeof serverMessage.sender.selectedFrame === "string") {
+          setMyFrame(serverMessage.sender.selectedFrame || "BASIC");
+        }
+        setMessages((prev) => {
+          const withoutOptimistic = prev.filter((message) => message.id !== optimisticId);
+          return upsertMessage(withoutOptimistic, serverMessage);
+        });
       }
-      setDraft("");
     } finally {
       setSending(false);
     }
+  };
+
+  const handleDraftKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    if (!draft.trim() || sending) return;
+    formRef.current?.requestSubmit();
   };
 
   if (!isOpen || !postId) return null;
@@ -191,7 +256,7 @@ export default function TeamChatModal({
     <div className="fixed inset-0 z-[240] flex items-center justify-center p-4">
       <button onClick={onClose} className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
 
-      <div className="relative w-full max-w-3xl rounded-2xl border border-white/15 bg-gradient-to-b from-[#0B1322] to-[#070D17] p-5 md:p-6">
+      <div className="relative flex h-[min(78vh,760px)] w-full max-w-3xl flex-col rounded-2xl border border-white/15 bg-gradient-to-b from-[#0B1322] to-[#070D17] p-5 md:p-6">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
             <h3 className="flex items-center gap-2 text-xl font-black text-white">
@@ -224,7 +289,7 @@ export default function TeamChatModal({
 
         <div
           ref={listRef}
-          className="mb-4 max-h-[50vh] min-h-[300px] space-y-3 overflow-y-auto rounded-xl border border-white/10 bg-black/25 p-4"
+          className="mb-4 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-xl border border-white/10 bg-black/25 p-4"
         >
           {loading ? (
             <div className="flex h-[260px] items-center justify-center text-slate-400">
@@ -241,22 +306,46 @@ export default function TeamChatModal({
               return (
                 <div key={message.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-[85%] rounded-xl border px-3 py-2 ${
-                      mine
-                        ? "border-cyan-400/40 bg-cyan-500/15 text-cyan-50"
-                        : "border-white/10 bg-[#0A1120] text-slate-100"
-                    }`}
+                    className="flex max-w-[92%] items-end gap-2"
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      setChatUserMenu({
+                        x: event.clientX,
+                        y: event.clientY,
+                        user: {
+                          id: message.sender.id,
+                          username: message.sender.username,
+                          imageUrl: message.sender.imageUrl,
+                          selectedFrame: message.sender.selectedFrame,
+                          mainRole: message.sender.mainRole,
+                        },
+                      });
+                    }}
                   >
-                    <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-300">
-                      {mine ? "Sen" : message.sender.username || "Oyuncu"}
-                    </p>
-                    <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.content}</p>
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      {new Date(message.createdAt).toLocaleTimeString("tr-TR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+                    <ChatAvatar
+                      imageUrl={message.sender.imageUrl}
+                      username={message.sender.username}
+                      frameType={message.sender.selectedFrame}
+                      size={56}
+                    />
+                    <div
+                      className={`max-w-full rounded-xl border px-3 py-2 ${
+                        mine
+                          ? "border-cyan-400/40 bg-cyan-500/15 text-cyan-50"
+                          : "border-white/10 bg-[#0A1120] text-slate-100"
+                      }`}
+                    >
+                      <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                        {mine ? "Sen" : message.sender.username || "Oyuncu"}
+                      </p>
+                      <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.content}</p>
+                      <p className="mt-1 text-[10px] text-slate-400">
+                        {new Date(message.createdAt).toLocaleTimeString("tr-TR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
               );
@@ -264,10 +353,11 @@ export default function TeamChatModal({
           )}
         </div>
 
-        <form onSubmit={sendMessage} className="flex items-end gap-2">
+        <form ref={formRef} onSubmit={sendMessage} className="mt-auto flex items-end gap-2">
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={handleDraftKeyDown}
             placeholder="Mesaj yaz..."
             maxLength={500}
             rows={2}
@@ -283,6 +373,13 @@ export default function TeamChatModal({
           </button>
         </form>
       </div>
+      <ChatUserActionLayer
+        menu={chatUserMenu}
+        currentUserId={user?.id ?? null}
+        onCloseMenu={() => setChatUserMenu(null)}
+        pushToast={pushToast}
+      />
     </div>
   );
 }
+

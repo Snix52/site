@@ -1,4 +1,4 @@
-import { Brain, Shield, Globe, XCircle, Code, Coffee } from '@/components/Icons'; 
+﻿import { Brain, Shield, Globe, XCircle, Code, Coffee } from '@/components/Icons'; 
 // Navbar, Link ve Auth importlarını sildik çünkü hepsi Layout'tan geliyor veya burada kullanılmıyor.
 
 export default function About() {
@@ -51,15 +51,15 @@ export default function About() {
                 <div className="space-y-5 text-lg leading-relaxed text-slate-400 flex-1 font-medium">
                     <ul className="space-y-6 mt-2">
                         <li className="flex gap-4">
-                            <span className="text-[#00FFFF] font-black text-xl">▸</span>
+                            <span className="text-[#00FFFF] font-black text-xl">•</span>
                             <span><strong className="text-white block mb-1">Pro Analizi:</strong> Global pro maçlarını kare kare izliyor, sebepleri çözümlüyoruz.</span>
                         </li>
                         <li className="flex gap-4">
-                            <span className="text-[#00FFFF] font-black text-xl">▸</span>
+                            <span className="text-[#00FFFF] font-black text-xl">•</span>
                             <span><strong className="text-white block mb-1">Forum Filtresi:</strong> Reddit ve global forumlardaki tartışmaları tarayıp hurafeleri eliyoruz.</span>
                         </li>
                         <li className="flex gap-4">
-                            <span className="text-[#00FFFF] font-black text-xl">▸</span>
+                            <span className="text-[#00FFFF] font-black text-xl">•</span>
                             <span><strong className="text-white block mb-1">Master Süzgeci:</strong> Verileri, Master Tier tecrübemizle harmanlayıp Türkçe'ye uyarlıyoruz.</span>
                         </li>
                     </ul>
@@ -150,7 +150,7 @@ export default function About() {
       {/* FOOTER */}
       <footer className="py-8 border-t border-white/5 bg-black text-center relative z-20">
         <p className="text-slate-600 text-xs font-bold uppercase tracking-widest">
-            © 2026 SNIX.GG • HOBİ PROJESİ • BEKLENTİ YOK, SADECE TUTKU
+            Â© 2026 SNIX.GG ⬢ HOBİ PROJESİ ⬢ BEKLENTİ YOK, SADECE TUTKU
         </p>
       </footer>
 

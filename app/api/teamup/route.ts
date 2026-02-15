@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 
 import { prisma } from "@/lib/prisma";
@@ -251,4 +251,5 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "İlan kapatılamadı." }, { status: 500 });
   }
 }
+
 

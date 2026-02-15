@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 
 import { prisma } from "@/lib/prisma";
@@ -7,6 +7,7 @@ import { syncUserFromClerk } from "@/lib/user-sync";
 import {
   GLOBAL_CHAT_CHANNEL,
   GLOBAL_CHAT_EVENT,
+  GLOBAL_CHAT_HISTORY_LIMIT,
   GLOBAL_CHAT_MAX_MESSAGE_LENGTH,
   GLOBAL_CHAT_RATE_LIMIT_MAX,
   GLOBAL_CHAT_RATE_LIMIT_WINDOW_MS,
@@ -23,6 +24,7 @@ function toPublicMessage(message: {
     username: string | null;
     imageUrl: string | null;
     mainRole: string;
+    selectedFrame: string;
   };
 }) {
   return {
@@ -34,14 +36,32 @@ function toPublicMessage(message: {
       username: message.sender.username,
       imageUrl: message.sender.imageUrl,
       mainRole: message.sender.mainRole,
+      selectedFrame: message.sender.selectedFrame,
     },
   };
 }
 
 function parseLimit(raw: string | null): number {
   const numeric = Number(raw ?? "");
-  if (!Number.isFinite(numeric)) return 80;
-  return Math.min(150, Math.max(20, Math.floor(numeric)));
+  if (!Number.isFinite(numeric)) return GLOBAL_CHAT_HISTORY_LIMIT;
+  return Math.min(GLOBAL_CHAT_HISTORY_LIMIT, Math.max(20, Math.floor(numeric)));
+}
+
+async function pruneGlobalChatMessages() {
+  const keepMessages = await prisma.globalChatMessage.findMany({
+    orderBy: { createdAt: "desc" },
+    take: GLOBAL_CHAT_HISTORY_LIMIT,
+    select: { id: true },
+  });
+
+  const keepIds = keepMessages.map((message) => message.id);
+  if (keepIds.length === 0) return;
+
+  await prisma.globalChatMessage.deleteMany({
+    where: {
+      id: { notIn: keepIds },
+    },
+  });
 }
 
 export async function GET(request: Request) {
@@ -69,6 +89,7 @@ export async function GET(request: Request) {
             username: true,
             imageUrl: true,
             mainRole: true,
+            selectedFrame: true,
           },
         },
       },
@@ -76,6 +97,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       realtimeEnabled: isPusherConfigured,
+      currentUserFrame: dbUser.selectedFrame || "BASIC",
       messages: rawMessages.reverse().map(toPublicMessage),
     });
   } catch (error) {
@@ -135,23 +157,28 @@ export async function POST(request: Request) {
             username: true,
             imageUrl: true,
             mainRole: true,
+            selectedFrame: true,
           },
         },
       },
     });
 
     const message = toPublicMessage(created);
-    let realtimePushed = false;
-
     const pusher = getPusherServer();
+    const realtimeAttempted = Boolean(pusher);
     if (pusher) {
-      await pusher.trigger(GLOBAL_CHAT_CHANNEL, GLOBAL_CHAT_EVENT, message);
-      realtimePushed = true;
+      void pusher.trigger(GLOBAL_CHAT_CHANNEL, GLOBAL_CHAT_EVENT, message).catch((pushError) => {
+        console.error("[GLOBAL_CHAT_PUSH_ERROR]", pushError);
+      });
     }
+    void pruneGlobalChatMessages().catch((pruneError) => {
+      console.error("[GLOBAL_CHAT_PRUNE_ERROR]", pruneError);
+    });
 
-    return NextResponse.json({ success: true, realtimePushed, message });
+    return NextResponse.json({ success: true, realtimeAttempted, message });
   } catch (error) {
     console.error("[GLOBAL_CHAT_POST_ERROR]", error);
     return NextResponse.json({ error: "Mesaj gönderilemedi." }, { status: 500 });
   }
 }
+

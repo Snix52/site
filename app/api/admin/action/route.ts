@@ -25,6 +25,7 @@ type AdminActionType =
   | "MANAGE_POINTS"
   | "APPROVE_COMMENT"
   | "DELETE_COMMENT"
+  | "RESOLVE_PROFILE_REPORT"
   | "CLOSE_TEAM_POST";
 
 function safeTrim(value: FormDataEntryValue | null) {
@@ -49,6 +50,7 @@ function isActionType(input: string): input is AdminActionType {
     input === "MANAGE_POINTS" ||
     input === "APPROVE_COMMENT" ||
     input === "DELETE_COMMENT" ||
+    input === "RESOLVE_PROFILE_REPORT" ||
     input === "CLOSE_TEAM_POST"
   );
 }
@@ -285,6 +287,39 @@ export async function POST(request: Request) {
         actorRole,
         action: "DELETE_COMMENT",
         targetCommentId: commentId,
+      });
+
+      return adminRedirect(request);
+    }
+
+    if (action === "RESOLVE_PROFILE_REPORT") {
+      if (!canModerateComments(actorRole)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+      const reportId = safeTrim(form.get("reportId"));
+      if (!reportId) return adminRedirect(request);
+
+      const report = await prisma.profileReport.findUnique({
+        where: { id: reportId },
+        select: { id: true, status: true, targetUserId: true },
+      });
+
+      if (!report || report.status !== "OPEN") return adminRedirect(request);
+
+      await prisma.profileReport.update({
+        where: { id: report.id },
+        data: {
+          status: "RESOLVED",
+          reviewedById: actor.id,
+          reviewedAt: new Date(),
+        },
+      });
+
+      await writeAdminAuditLog({
+        actorId: actor.id,
+        actorRole,
+        action: "RESOLVE_PROFILE_REPORT",
+        targetUserId: report.targetUserId,
+        details: { reportId: report.id },
       });
 
       return adminRedirect(request);

@@ -23,13 +23,13 @@ export async function PATCH(req: Request) {
       return new NextResponse("User not found", { status: 404 });
     }
 
-    // 🚫 GÜVENLİK 1: BAN KONTROLÜ
+    // GÜVENLİK 1: BAN KONTROLÜ
     if (existingUser.isBanned) {
       return new NextResponse("Hesabınız yasaklı, işlem yapamazsınız.", { status: 403 });
     }
 
     // ---------------------------------------------------------
-    // 🛡️ 4. SIKI DOĞRULAMALAR (VALIDATION - GİRİŞ KAPISI)
+    // 4. SIKI DOĞRULAMALAR (VALIDATION - GİRİŞ KAPISI)
     // ---------------------------------------------------------
 
     // A. Bio Kontrolü (Max 300 karakter)
@@ -58,14 +58,14 @@ export async function PATCH(req: Request) {
         return new NextResponse("Şampiyon ismi geçersiz.", { status: 400 });
     }
 
-    // 🛡️ GÜVENLİK 2: ENVANTER KONTROLÜ (HACK KORUMASI)
+    // GÜVENLİK 2: ENVANTER KONTROLÜ (HACK KORUMASI)
     // Kullanıcı bir çerçeve seçtiyse, buna gerçekten sahip mi?
     if (selectedFrame) {
         const ownedFrames = existingUser.ownedFrames || ["BASIC"];
         
         if (!ownedFrames.includes(selectedFrame)) {
             // HACK GİRİŞİMİ: Sahip olmadığı şeyi takmaya çalışıyor.
-            console.warn(`🚨 HACK DENEMESİ: ${userId} ID'li kullanıcı sahip olmadığı çerçeveyi (${selectedFrame}) takmaya çalıştı!`);
+            console.warn(`HACK DENEMESİ: ${userId} ID'li kullanıcı sahip olmadığı çerçeveyi (${selectedFrame}) takmaya çalıştı!`);
             return new NextResponse("Bu çerçeveye sahip değilsin, önce satın al!", { status: 400 });
         }
     }
@@ -79,7 +79,7 @@ export async function PATCH(req: Request) {
         favoriteChamp,
         rankGoal: rankGoal ? rankGoal.trim() : undefined,
         socialDiscord: socialDiscord ? socialDiscord.trim() : undefined,
-        selectedFrame, // ✅ Güvenlikten geçti, güncelleyebiliriz
+        selectedFrame, // Güvenlikten geçti, güncelleyebiliriz
       },
     });
 

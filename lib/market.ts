@@ -1,4 +1,4 @@
-// Bu dosya Market ve API arasındaki Fiyat Senkronizasyonunu sağlar.
+﻿// Bu dosya Market ve API arasındaki Fiyat Senkronizasyonunu sağlar.
 // Fiyatları değiştirmek istersen sadece burayı düzenlemen yeterli.
 
 export const MARKET_PRICES: Record<string, number> = {

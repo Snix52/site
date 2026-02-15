@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 
 import { prisma } from "@/lib/prisma";
@@ -7,6 +7,7 @@ import { resolveTeamupChatAccess } from "@/lib/teamup-chat-access";
 import {
   getTeamupChatChannelName,
   TEAMUP_CHAT_EVENT,
+  TEAMUP_CHAT_HISTORY_LIMIT,
   TEAMUP_CHAT_MAX_MESSAGE_LENGTH,
   TEAMUP_CHAT_RATE_LIMIT_MAX,
   TEAMUP_CHAT_RATE_LIMIT_WINDOW_MS,
@@ -24,6 +25,7 @@ function toPublicMessage(message: {
     username: string | null;
     imageUrl: string | null;
     mainRole: string;
+    selectedFrame: string;
   };
 }) {
   return {
@@ -36,6 +38,7 @@ function toPublicMessage(message: {
       username: message.sender.username,
       imageUrl: message.sender.imageUrl,
       mainRole: message.sender.mainRole,
+      selectedFrame: message.sender.selectedFrame,
     },
   };
 }
@@ -48,6 +51,25 @@ function mapAccessError(reason: "NOT_FOUND" | "BANNED" | "NOT_ALLOWED") {
     return NextResponse.json({ error: "Banlı hesap sohbeti kullanamaz." }, { status: 403 });
   }
   return NextResponse.json({ error: "Bu sohbet için yetkin yok." }, { status: 403 });
+}
+
+async function pruneTeamupChatMessages(postId: string) {
+  const keepMessages = await prisma.teamChatMessage.findMany({
+    where: { teamPostId: postId },
+    orderBy: { createdAt: "desc" },
+    take: TEAMUP_CHAT_HISTORY_LIMIT,
+    select: { id: true },
+  });
+
+  const keepIds = keepMessages.map((message) => message.id);
+  if (keepIds.length === 0) return;
+
+  await prisma.teamChatMessage.deleteMany({
+    where: {
+      teamPostId: postId,
+      id: { notIn: keepIds },
+    },
+  });
 }
 
 export async function GET(request: Request) {
@@ -68,24 +90,32 @@ export async function GET(request: Request) {
       return mapAccessError(access.reason);
     }
 
-    const rawMessages = await prisma.teamChatMessage.findMany({
-      where: { teamPostId: postId },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-      include: {
-        sender: {
-          select: {
-            id: true,
-            username: true,
-            imageUrl: true,
-            mainRole: true,
+    const [rawMessages, viewerProfile] = await Promise.all([
+      prisma.teamChatMessage.findMany({
+        where: { teamPostId: postId },
+        orderBy: { createdAt: "desc" },
+        take: TEAMUP_CHAT_HISTORY_LIMIT,
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              imageUrl: true,
+              mainRole: true,
+              selectedFrame: true,
+            },
           },
         },
-      },
-    });
+      }),
+      prisma.user.findUnique({
+        where: { id: user.id },
+        select: { selectedFrame: true },
+      }),
+    ]);
 
     return NextResponse.json({
       realtimeEnabled: isPusherConfigured,
+      currentUserFrame: viewerProfile?.selectedFrame || "BASIC",
       messages: rawMessages.reverse().map(toPublicMessage),
     });
   } catch (error) {
@@ -153,6 +183,7 @@ export async function POST(request: Request) {
             username: true,
             imageUrl: true,
             mainRole: true,
+            selectedFrame: true,
           },
         },
       },
@@ -161,16 +192,21 @@ export async function POST(request: Request) {
     const message = toPublicMessage(created);
     const channel = getTeamupChatChannelName(postId);
 
-    let realtimePushed = false;
     const pusher = getPusherServer();
+    const realtimeAttempted = Boolean(pusher);
     if (pusher) {
-      await pusher.trigger(channel, TEAMUP_CHAT_EVENT, message);
-      realtimePushed = true;
+      void pusher.trigger(channel, TEAMUP_CHAT_EVENT, message).catch((pushError) => {
+        console.error("[TEAMUP_CHAT_PUSH_ERROR]", pushError);
+      });
     }
+    void pruneTeamupChatMessages(postId).catch((pruneError) => {
+      console.error("[TEAMUP_CHAT_PRUNE_ERROR]", pruneError);
+    });
 
-    return NextResponse.json({ success: true, realtimePushed, message });
+    return NextResponse.json({ success: true, realtimeAttempted, message });
   } catch (error) {
     console.error("[TEAMUP_CHAT_POST_ERROR]", error);
     return NextResponse.json({ error: "Mesaj gönderilemedi." }, { status: 500 });
   }
 }
+

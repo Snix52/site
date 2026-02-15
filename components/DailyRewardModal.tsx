@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from 'react';
 import { X, Check, Lock, Gift, Zap, Timer } from 'lucide-react';
@@ -26,12 +26,12 @@ const REWARDS = [
 export default function DailyRewardModal({ isOpen, onClose, currentStreak, lastClaimDate, onClaim }: DailyRewardProps) {
   const [isClaiming, setIsClaiming] = useState(false);
   
-  // ⚡ YENİ STATE: Tıklanan günü hafızaya alır (Snapshot)
+  // YENİ STATE: Tıklanan günü hafızaya alır (Snapshot)
   const [frozenDay, setFrozenDay] = useState<number | null>(null);
   
   const [timeLeft, setTimeLeft] = useState("");
 
-  // 🕒 SAYAÇ MANTIĞI
+  // SAYAÇ MANTIĞI
   useEffect(() => {
     const calculateTime = () => {
       const now = new Date();
@@ -71,7 +71,7 @@ export default function DailyRewardModal({ isOpen, onClose, currentStreak, lastC
   const handleClaim = () => {
     if (!realRewardAvailable || isClaiming) return;
     
-    // ⚡ SNAPSHOT AL: O anki hedef günü dondur
+    // SNAPSHOT AL: O anki hedef günü dondur
     setFrozenDay(displayDay);
     setIsClaiming(true);
     
@@ -119,7 +119,7 @@ export default function DailyRewardModal({ isOpen, onClose, currentStreak, lastC
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-10 relative z-10">
           {REWARDS.map((reward) => {
             
-            // ⚡ MANTIK: Artık her şeyi 'displayDay' (Donmuş Gün) üzerinden hesaplıyoruz.
+            // MANTIK: Artık her şeyi 'displayDay' (Donmuş Gün) üzerinden hesaplıyoruz.
             // Bu sayede prop'lar değişse bile animasyon bitene kadar burası sabit kalıyor.
 
             // Tamamlanmış:
@@ -220,3 +220,4 @@ export default function DailyRewardModal({ isOpen, onClose, currentStreak, lastC
     </div>
   );
 }
+

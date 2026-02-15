@@ -1,10 +1,10 @@
-interface SpBadgeProps {
+﻿interface SpBadgeProps {
   points: number;
   showAnimation?: boolean;
 }
 
 export default function SpBadge({ points, showAnimation = false }: SpBadgeProps) {
-  // ⚡ Performans Hilesi: Date.now() yerine sabit bir toggle kullanarak re-mount yükünü azalttık
+  // Performans Hilesi: Date.now() yerine sabit bir toggle kullanarak re-mount yükünü azalttık
   const animationKey = showAnimation ? "anim-active" : "anim-idle";
 
   return (
@@ -25,7 +25,7 @@ export default function SpBadge({ points, showAnimation = false }: SpBadgeProps)
                       <stop offset="100%" stopColor="#0088FF" />
                    </linearGradient>
 
-                   {/* ⚡ stdDeviation 2'den 1.5'e düşürüldü */}
+                   {/* stdDeviation 2'den 1.5'e düşürüldü */}
                    <filter id="inner-glow">
                       <feFlood floodColor="#00FFFF"/>
                       <feComposite in2="SourceAlpha" operator="out"/>
@@ -50,7 +50,7 @@ export default function SpBadge({ points, showAnimation = false }: SpBadgeProps)
 
         {/* --- KATMAN 2: SABİT LOGO --- */}
         <div key={animationKey + '-core'} className="absolute inset-0 w-full h-full animate-core-pop will-change-transform">
-             {/* ⚡ drop-shadow 20px'den 8px'e düşürüldü */}
+             {/* drop-shadow 20px'den 8px'e düşürüldü */}
              <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_0_8px_rgba(0,255,255,0.5)]">
                 <defs>
                    <linearGradient id="crystal-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -68,7 +68,7 @@ export default function SpBadge({ points, showAnimation = false }: SpBadgeProps)
                 <circle cx="50" cy="50" r="40" fill="url(#hex-pattern)" />
 
                 <g transform="translate(14, 17) scale(0.6)">
-                    {/* ⚡ Arka plandaki ağır blur (6px) 3px'e düşürüldü, opacity azaltıldı */}
+                    {/* Arka plandaki ağır blur (6px) 3px'e düşürüldü, opacity azaltıldı */}
                     <path d="M85 20 H45 L35 30 V45 L45 50 H75 L85 60 V80 L75 90 H35" 
                           stroke="#00FFFF" strokeWidth="10" strokeLinecap="square" strokeLinejoin="bevel" 
                           fill="none" opacity="0.2" filter="blur(3px)" />
@@ -94,7 +94,7 @@ export default function SpBadge({ points, showAnimation = false }: SpBadgeProps)
 
       {/* YAZI KISMI */}
       <div className="hidden md:flex flex-col justify-center leading-none select-none">
-          {/* ⚡ Yazı parlaması 10px'den 5px'e çekildi */}
+          {/* Yazı parlaması 10px'den 5px'e çekildi */}
           <span key={points} className="text-white font-black text-xl tracking-widest drop-shadow-[0_0_5px_rgba(0,255,255,0.6)] font-[family-name:var(--font-rajdhani)] animate-[pulse_0.4s_ease-in-out]">
               {points}
           </span>
